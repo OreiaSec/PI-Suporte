@@ -5,32 +5,29 @@ import mysql.connector
 from mysql.connector import Error
 from werkzeug.security import generate_password_hash, check_password_hash
 import re
-from datetime import datetime # Importar datetime para data e hora
+from datetime import datetime
 
 app = Flask(__name__)
-# A SECRET_KEY é essencial para a segurança das sessões do Flask.
-# Em produção, ela DEVE ser definida como uma variável de ambiente forte e aleatória.
-# 'sua_chave_secreta_super_segura_aqui' é um placeholder para desenvolvimento local.
 app.secret_key = os.environ.get('SECRET_KEY', 'e9f8d7c6b5a41234567890abcdefghijklmnopqrstuvwxyz') # Chave de exemplo, altere em produção!
 
 # Configurações do banco de dados MySQL - usando variáveis de ambiente para segurança
 DB_CONFIG = {
     'host': os.environ.get('DB_HOST'),
-    'port': int(os.environ.get('DB_PORT', 3306)), # Default para 3306
+    'port': int(os.environ.get('DB_PORT', 3306)),
     'database': os.environ.get('DB_NAME'),
     'user': os.environ.get('DB_USER'),
     'password': os.environ.get('DB_PASSWORD'),
     'charset': 'utf8mb4',
     'collation': 'utf8mb4_unicode_ci',
-    'autocommit': True, # Garante que as transações sejam auto-comitadas
-    'connection_timeout': 60, # Tempo limite de conexão
-    'raise_on_warnings': True # Levanta exceções para warnings SQL
+    'autocommit': True,
+    'connection_timeout': 60,
+    'raise_on_warnings': True
 }
 
 def get_db_connection():
     """Estabelece conexão com o banco de dados MySQL com retry"""
-    max_retries = 5 # Aumentei para 5 tentativas
-    retry_delay = 3 # Atraso de 3 segundos entre tentativas
+    max_retries = 5
+    retry_delay = 3
     retry_count = 0
 
     while retry_count < max_retries:
@@ -44,7 +41,7 @@ def get_db_connection():
             print(f"Tentativa {retry_count}/{max_retries} - Erro ao conectar com MySQL: {e}")
             if retry_count < max_retries:
                 import time
-                time.sleep(retry_delay) # Espera antes de tentar novamente
+                time.sleep(retry_delay)
             else:
                 print("Máximo de tentativas de conexão excedido. Não foi possível conectar ao banco de dados.")
                 return None
@@ -58,7 +55,6 @@ def init_database():
         if connection:
             cursor = connection.cursor()
 
-            # SQL para criar a tabela users_from_bb
             create_users_table_query = """
             CREATE TABLE IF NOT EXISTS users_from_bb (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -76,7 +72,6 @@ def init_database():
             cursor.execute(create_users_table_query)
             print("Tabela 'users_from_bb' criada ou já existe.")
 
-            # SQL para criar a tabela umbrella_retirada
             create_umbrella_table_query = """
             CREATE TABLE IF NOT EXISTS umbrella_retirada (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -92,7 +87,7 @@ def init_database():
             cursor.execute(create_umbrella_table_query)
             print("Tabela 'umbrella_retirada' criada ou já existe.")
 
-            connection.commit() # Confirma as operações de criação de tabela
+            connection.commit()
 
     except Error as e:
         print(f"Erro ao criar tabelas: {e}")
@@ -107,7 +102,7 @@ def validar_cpf(cpf):
 
 def validar_email(email):
     """Valida formato do email"""
-    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$' # Regex mais robusta para email
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     return re.match(pattern, email) is not None
 
 def inserir_usuario(nome, cpf, pais, email, telefone, senha):
@@ -120,7 +115,6 @@ def inserir_usuario(nome, cpf, pais, email, telefone, senha):
 
         cursor = connection.cursor()
 
-        # Verificar se CPF ou email já existem
         check_query = "SELECT id FROM users_from_bb WHERE cpf = %s OR email = %s"
         cursor.execute(check_query, (cpf, email))
         existing_user = cursor.fetchone()
@@ -128,10 +122,8 @@ def inserir_usuario(nome, cpf, pais, email, telefone, senha):
         if existing_user:
             return False, "CPF ou email já cadastrados!"
 
-        # Hash da senha para segurança
         senha_hash = generate_password_hash(senha)
 
-        # Inserir novo usuário
         insert_query = """
         INSERT INTO users_from_bb (nome, cpf, pais, email, telefone, senha)
         VALUES (%s, %s, %s, %s, %s, %s)
@@ -157,26 +149,23 @@ def verificar_login(email, senha):
     try:
         connection = get_db_connection()
         if not connection:
-            return False, "Erro de conexão com o banco de dados!", None, None, None # Adicione None para email, phone, fullname
+            return False, "Erro de conexão com o banco de dados!", None, None, None
 
-        # Usar dictionary=True para acessar colunas pelo nome
         cursor = connection.cursor(dictionary=True)
 
-        # Selecionar nome, email e telefone também
         query = "SELECT id, nome, email, telefone, senha FROM users_from_bb WHERE email = %s"
         cursor.execute(query, (email,))
         user = cursor.fetchone()
 
-        if user and check_password_hash(user['senha'], senha): # Use user['senha'] para acessar
+        if user and check_password_hash(user['senha'], senha):
             print(f"Login realizado: {user['nome']} - {user['email']}")
-            # Retorna sucesso, nome, email, telefone e ID do usuário
             return True, user['nome'], user['email'], user['telefone'], user['id']
         else:
-            return False, "Email ou senha incorretos!", None, None, None, None # Adicione None para ID
+            return False, "Email ou senha incorretos!", None, None, None
 
     except Error as e:
         print(f"Erro ao verificar login: {e}")
-        return False, f"Erro no banco de dados: {str(e)}", None, None, None, None
+        return False, f"Erro no banco de dados: {str(e)}", None, None, None
     finally:
         if connection and connection.is_connected():
             cursor.close()
@@ -184,8 +173,6 @@ def verificar_login(email, senha):
 
 
 # --- HTML principal com CSS e JS embutidos ---
-# Usamos render_template_string para servir este HTML
-# Note o uso de `url_for('static', filename='...')` para referenciar a imagem.
 html_code = """
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -321,7 +308,6 @@ html_code = """
             border-color: transparent transparent #333 transparent;
         }
 
-        /* Mostra o tooltip quando o campo está inválido e em foco, ou vazio e em foco */
         .input-group input:focus:invalid + .tooltip,
         .input-group select:focus:invalid + .tooltip,
         .input-group input:focus:placeholder-shown + .tooltip {
@@ -402,25 +388,21 @@ html_code = """
 
     <script>
         window.onload = function () {
-            // Verifica se há mensagens flash do Flask
             const flashMessages = document.querySelectorAll('.flash-message, .flash-error');
-            let initialDelay = 2000; // Atraso padrão para a tela de carregamento
+            let initialDelay = 2000;
 
             if (flashMessages.length > 0) {
-                // Se houver mensagens, mostre o container imediatamente (sem tela de carregamento)
                 document.querySelector(".loading-screen").style.display = "none";
                 document.querySelector(".container").style.display = "flex";
-                // E exiba as mensagens por alguns segundos
                 flashMessages.forEach(msg => {
-                    msg.style.display = 'block'; // Garante que a mensagem esteja visível
+                    msg.style.display = 'block';
                     setTimeout(() => {
                         msg.style.opacity = '0';
                         msg.style.transition = 'opacity 1s ease-out';
                         setTimeout(() => msg.style.display = 'none', 1000);
-                    }, 5000); // Mensagem visível por 5 segundos
+                    }, 5000);
                 });
             } else {
-                // Comporta-se normalmente com a tela de carregamento se não houver mensagens
                 setTimeout(() => {
                     document.querySelector(".loading-screen").style.opacity = 0;
                     setTimeout(() => {
@@ -442,7 +424,6 @@ html_code = """
                 return;
             }
 
-            // NOVO: Transferir os valores para os campos ocultos do formulário da tela1
             document.getElementById("hiddenNome").value = nome;
             document.getElementById("hiddenCpf").value = cpf;
             document.getElementById("hiddenPais").value = pais;
@@ -465,7 +446,6 @@ html_code = """
                 showPasswordError();
                 return;
             }
-            // O formulário correto a ser submetido é o da tela1, que tem id="formCadastro"
             document.getElementById("formCadastro").submit();
         }
 
@@ -629,7 +609,6 @@ html_code = """
 
 @app.route('/')
 def index():
-    # Verifica se o usuário já está logado
     if 'user_name' in session:
         return redirect(url_for('dashboard'))
     return render_template_string(html_code)
@@ -656,7 +635,6 @@ def cadastrar():
     telefone = request.form.get('telefone', '').strip()
     senha = request.form.get('senha', '')
 
-    # Validações
     if not all([nome, cpf, pais, email, telefone, senha]):
         flash('Todos os campos são obrigatórios para o cadastro!', 'error')
         return redirect(url_for('index'))
@@ -673,7 +651,6 @@ def cadastrar():
         flash('A senha deve ter pelo menos 6 caracteres!', 'error')
         return redirect(url_for('index'))
 
-    # Inserir no banco de dados
     sucesso, mensagem = inserir_usuario(nome, cpf, pais, email, telefone, senha)
 
     if sucesso:
@@ -692,7 +669,6 @@ def login():
         flash('Email e senha são obrigatórios para o login!', 'error')
         return redirect(url_for('index'))
 
-    # Alterado para receber mais dados do verificar_login
     sucesso, user_name, user_email, user_phone, user_id = verificar_login(email, senha)
 
     if sucesso:
@@ -703,14 +679,13 @@ def login():
         flash(f'Bem-vindo de volta, {user_name}!', 'message')
         return redirect(url_for('dashboard'))
     else:
-        flash(user_name, 'error') # user_name aqui conterá a mensagem de erro
+        flash(user_name, 'error')
 
     return redirect(url_for('index'))
 
 @app.route('/dashboard')
 def dashboard():
     if 'user_name' in session:
-        # A template 'user_dashboard.html' precisa estar na pasta 'templates'
         return render_template('user_dashboard.html', user_name=session['user_name'])
     else:
         flash('Você precisa fazer login para acessar esta página.', 'error')
@@ -725,30 +700,24 @@ def logout():
     flash('Você foi desconectado.', 'message')
     return redirect(url_for('index'))
 
-# --- NOVA ROTA PARA REGISTRAR RETIRADA DE GUARDA-CHUVA ---
 @app.route('/registrar_retirada', methods=['POST'])
 def registrar_retirada():
-    # Verifica se o usuário está logado
     if 'user_id' not in session:
         return jsonify({'status': 'error', 'message': 'Não autenticado. Faça login para registrar a retirada.'}), 401
         
-    # Pega o código do guarda-chuva enviado pelo JavaScript (JSON)
     data = request.get_json()
     codigo_guarda_chuva = data.get('codigo', '').strip()
 
     if not codigo_guarda_chuva or len(codigo_guarda_chuva) != 6:
         return jsonify({'status': 'error', 'message': 'Código do guarda-chuva inválido. Deve ter 6 caracteres.'}), 400
 
-    # Pega os dados do usuário da sessão (garantindo que foram salvos no login)
-    nome_usuario = session.get('user_name') # Seu campo 'nome' no banco
+    nome_usuario = session.get('user_name')
     email = session.get('email')
     telefone = session.get('phone')
 
-    # Validação dos dados da sessão (devem existir)
     if not all([nome_usuario, email, telefone]):
         return jsonify({'status': 'error', 'message': 'Dados do usuário (nome, email, telefone) não encontrados na sessão. Por favor, faça login novamente.'}), 400
 
-    # Obtém data e hora atuais
     data_retirada = datetime.now().strftime('%Y-%m-%d')
     hora_retirada = datetime.now().strftime('%H:%M:%S')
 
@@ -767,15 +736,13 @@ def registrar_retirada():
         values = (nome_usuario, email, telefone, codigo_guarda_chuva, data_retirada, hora_retirada)
         
         cursor.execute(insert_query, values)
-        # connection.commit() # autocommit=True já cuida disso
 
         print(f"Retirada registrada: Usuário '{nome_usuario}', Código: '{codigo_guarda_chuva}'")
         return jsonify({'status': 'success', 'message': 'Retirada registrada com sucesso!'})
 
     except Error as e:
         print(f"Erro ao inserir retirada no MySQL: {e}")
-        # Rollback em caso de erro para garantir a integridade (embora autocommit esteja True)
-        if connection and not connection.autocommit: # Apenas se autocommit for False
+        if connection and not connection.autocommit:
              connection.rollback()
         return jsonify({'status': 'error', 'message': f'Erro no servidor ao registrar retirada: {str(e)}'}), 500
     finally:
@@ -783,12 +750,9 @@ def registrar_retirada():
             cursor.close()
             connection.close()
 
-# Bloco para garantir que as tabelas sejam criadas ao iniciar a aplicação no contexto do Flask
 with app.app_context():
     init_database()
 
 if __name__ == '__main__':
-    # Obtém a porta do ambiente (Render) ou usa 5000 como padrão
     port = int(os.environ.get('PORT', 5000))
-    # Em produção, debug=False. Para desenvolvimento local, pode ser True.
     app.run(host='0.0.0.0', port=port, debug=False)
