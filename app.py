@@ -28,7 +28,7 @@ def cadastro_tecnico():
     # Atenção: Eu mascarei a senha no print por segurança. NUNCA imprima senhas em logs.
     # ---------------------------------------------------
 
-    return jsonify({"success": True, "message": "Cadastro de técnico realizado com sucesso!"}), 200
+    return jsonify({"success": True, "message": "Login realizado com sucesso!"}), 200
 
 if __name__ == '__main__':
     # Roda o aplicativo Flask em modo de depuração (debug=True)
