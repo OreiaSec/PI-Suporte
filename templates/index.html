@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bubble Support</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <div class="loading-screen">
+    <img src="https://i.postimg.cc/26VcMNnf/Bubble-SA-PNG.png" alt="Logo Bubble SA" class="umbrella-img" />
+    <p style="color:white; font-weight:600; margin-top: 10px;">Aguarde. Estamos preparando tudo.</p>
+  </div>
+
+  <div class="container">
+    <h2>Bubble Support</h2>
+
+    <form id="loginForm">
+      <div class="input-group">
+        <i class="fa fa-envelope"></i>
+        <input type="email" id="emailTecnico" name="emailTecnico" placeholder="E-mail" required />
+      </div>
+
+      <div class="input-group">
+        <i class="fa fa-id-card"></i>
+        <input type="text" id="cpfTecnico" name="cpfTecnico" placeholder="CPF" required />
+      </div>
+
+      <div class="input-group">
+        <i class="fa fa-lock"></i>
+        <input type="password" id="senhaTecnico" name="senhaTecnico" placeholder="Senha" required />
+      </div>
+
+      <button type="submit">Entrar</button>
+    </form>
+  </div>
+
+  <script>
+    // Código JavaScript para a tela de carregamento (mantido no front-end)
+    window.onload = function () {
+      setTimeout(() => {
+        document.querySelector(".loading-screen").style.opacity = 0;
+        setTimeout(() => {
+          document.querySelector(".loading-screen").style.display = "none";
+          document.querySelector(".container").style.display = "flex";
+        }, 1000);
+      }, 3000);
+    };
+
+    // Novo código JavaScript para lidar com a submissão do formulário
+    document.getElementById('loginForm').addEventListener('submit', async (event) => {
+      event.preventDefault(); // Impede o envio padrão do formulário
+
+      const email = document.getElementById("emailTecnico").value.trim();
+      const cpf = document.getElementById("cpfTecnico").value.trim();
+      const senha = document.getElementById("senhaTecnico").value.trim();
+
+      // Validação no lado do cliente (opcional, pois o servidor também validará)
+      if (!email || !cpf || !senha) {
+        alert("Por favor, preencha todos os campos!");
+        return;
+      }
+
+      // Cria um objeto FormData para enviar os dados do formulário
+      const formData = new FormData();
+      formData.append('emailTecnico', email);
+      formData.append('cpfTecnico', cpf);
+      formData.append('senhaTecnico', senha);
+
+      try {
+        // Envia os dados para o seu endpoint Flask
+        const response = await fetch('/login_tecnico', {
+          method: 'POST',
+          body: formData, // Envia o FormData
+        });
+
+        const data = await response.json(); // Pega a resposta JSON do servidor
+
+        if (data.success) {
+          alert(data.message);
+          // Redirecionar ou fazer algo após o login bem-sucedido
+        } else {
+          alert("Erro no login: " + data.message);
+        }
+      } catch (error) {
+        console.error('Erro ao enviar dados:', error);
+        alert('Ocorreu um erro ao tentar fazer login. Tente novamente.');
+      }
+    });
+  </script>
+  </body>
+</html>
