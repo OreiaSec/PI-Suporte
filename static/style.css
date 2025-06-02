@@ -1,0 +1,163 @@
+/* Reseta alguns estilos padrão do navegador */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  /* Fundo azul escuro como nas suas referências */
+  background-color: #17212b; /* Um tom de azul escuro que combina com suas imagens */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  overflow: hidden; /* Evita barras de rolagem desnecessárias */
+}
+
+/* -------------------- Tela de Carregamento -------------------- */
+.loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #17212b; /* Mesmo azul escuro do body */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transition: opacity 1s ease-in-out;
+  z-index: 10;
+}
+
+.loading-screen .umbrella-img {
+  width: auto;
+  height: auto;
+  max-width: 150px; /* Tamanho ajustado para o logo de carregamento */
+  max-height: 150px;
+  margin-bottom: 20px;
+  opacity: 0; /* Começa invisível para a animação fadeIn */
+  animation: fadeIn 1.5s ease forwards,
+             float 3s ease-in-out infinite,
+             pulse 1s ease-in-out infinite;
+}
+
+.loading-screen p {
+  color: white;
+  font-weight: 600;
+  margin-top: 10px;
+  font-size: 1.1em; /* Um pouco maior */
+}
+
+
+/* -------------------- Container Principal (Formulário) -------------------- */
+.container {
+  /* Adaptação para o card cinza/branco arredondado da imagem de referência */
+  background-color: rgba(255, 255, 255, 0.95); /* Quase branco, ligeiramente transparente */
+  backdrop-filter: blur(5px); /* Um pouco de desfoque, se o fundo tiver detalhes */
+  box-shadow: 0px 8px 25px rgba(0, 0, 0, 0.2); /* Sombra mais suave e elevada */
+  width: 90%;
+  max-width: 450px; /* Ligeiramente mais largo para o card de login */
+  border-radius: 25px; /* Bordas bem mais arredondadas como na imagem */
+  padding: 40px; /* Mais preenchimento interno */
+  display: none; /* Inicialmente escondido */
+  flex-direction: column; /* Para alinhar o conteúdo verticalmente */
+  align-items: center; /* Centraliza itens horizontalmente no container */
+  justify-content: center;
+  text-align: center; /* Centraliza o texto */
+}
+
+h2 {
+  color: #333; /* Cor mais escura para o texto no card branco */
+  margin-bottom: 25px;
+  font-weight: 700; /* Mais negrito para o título principal */
+  font-size: 1.8em; /* Título maior */
+}
+
+/* -------------------- Formulário e Inputs -------------------- */
+form {
+  width: 100%; /* Ocupa a largura total do container */
+}
+
+.input-group {
+  position: relative;
+  width: 100%;
+  margin: 18px 0; /* Mais espaçamento vertical entre os inputs */
+}
+
+.input-group i {
+  position: absolute;
+  top: 50%;
+  left: 18px; /* Ajusta a posição do ícone */
+  transform: translateY(-50%);
+  color: #888; /* Cor mais suave para os ícones */
+  font-size: 19px;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 15px 15px 15px 50px; /* Aumenta padding para ícone e texto */
+  border: 1px solid #ddd; /* Borda mais clara */
+  border-radius: 12px; /* Bordas arredondadas nos inputs */
+  font-size: 16px;
+  transition: all 0.3s ease;
+  background-color: #f9f9f9; /* Fundo levemente cinza para os inputs */
+  color: #333; /* Cor do texto no input */
+}
+
+.input-group input:focus {
+  border-color: #007BFF; /* Cor da borda ao focar */
+  background-color: #fff; /* Fundo branco ao focar */
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2); /* Sombra de foco mais suave */
+}
+
+button {
+  margin-top: 30px; /* Mais espaço acima do botão */
+  padding: 15px 25px;
+  border: none;
+  background-color: #007BFF; /* Cor do botão primário */
+  color: white;
+  border-radius: 12px; /* Bordas arredondadas no botão */
+  cursor: pointer;
+  font-size: 17px;
+  font-weight: 600; /* Texto do botão mais forte */
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  width: 100%;
+}
+
+button:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px); /* Pequeno efeito de elevação */
+}
+
+/* -------------------- Animações -------------------- */
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.7); }
+  to { opacity: 1; transform: scale(1); } /* Logo fica em tamanho normal ao final da animação */
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) scale(1); } /* Ajustado para 1 */
+  50% { transform: translateY(-15px) scale(1.02); } /* Mais movimento e leve pulso */
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); } /* Pulsação mais suave */
+}
+
+/* Garante que o container principal também seja flex para centralização */
+/* Quando a tela de carregamento sumir, este estilo atua */
+body.loading-finished .container {
+  display: flex !important; /* Sobrescreve o display: none inicial */
+  animation: fadeInContainer 0.8s ease-out forwards; /* Adiciona uma animação para o container aparecer */
+}
+
+@keyframes fadeInContainer {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
