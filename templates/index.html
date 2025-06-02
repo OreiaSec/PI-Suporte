@@ -1,1 +1,98 @@
-cola o codigo vacilao
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bubble Support</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <div class="loading-screen">
+    <img src="https://i.postimg.cc/26VcMNnf/Bubble-SA-PNG.png" alt="Logo Bubble SA" class="umbrella-img" />
+    <p>Conectando ao Render...</p>
+  </div>
+
+  <div class="container">
+    <h2>Bem-vindo ao Bubble SA!</h2>
+    <p style="color: #666; margin-bottom: 30px; font-size: 0.95em;">Preencha seus dados para cadastro de técnico:</p>
+    <form id="cadastroTecnicoForm" action="/cadastro_tecnico" method="POST">
+      <div class="input-group">
+        <i class="fa fa-user"></i>
+        <input type="text" id="nomeTecnico" name="nomeTecnico" placeholder="Nome do Técnico" required />
+      </div>
+
+      <div class="input-group">
+        <i class="fa fa-envelope"></i> <input type="email" id="emailCorporativo" name="emailCorporativo" placeholder="E-mail Corporativo" required />
+      </div>
+
+      <div class="input-group">
+        <i class="fa fa-lock"></i> <input type="password" id="senha" name="senha" placeholder="Senha" required />
+      </div>
+
+      <button type="submit">Cadastrar</button>
+      <button type="button" style="background-color: #e0e0e0; color: #333; margin-top: 15px;" onclick="alert('Funcionalidade de Login futura!');">
+        Já possui cadastro? Login
+      </button>
+    </form>
+    <div id="message" style="margin-top: 20px; text-align: center; font-weight: bold;"></div>
+  </div>
+
+  <script>
+    window.onload = function () {
+      setTimeout(() => {
+        document.querySelector(".loading-screen").style.opacity = 0;
+        setTimeout(() => {
+          document.querySelector(".loading-screen").style.display = "none";
+          document.body.classList.add('loading-finished'); // Adiciona a classe para mostrar o container
+        }, 1000);
+      }, 3000);
+    };
+
+    document.getElementById('cadastroTecnicoForm').addEventListener('submit', async (event) => {
+      event.preventDefault(); // Impede o envio padrão do formulário
+
+      const nomeTecnico = document.getElementById("nomeTecnico").value.trim();
+      const emailCorporativo = document.getElementById("emailCorporativo").value.trim();
+      const senha = document.getElementById("senha").value.trim();
+
+      // Validação básica no lado do cliente
+      if (!nomeTecnico || !emailCorporativo || !senha) {
+        document.getElementById('message').style.color = 'red';
+        document.getElementById('message').textContent = "Por favor, preencha todos os campos!";
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('nomeTecnico', nomeTecnico);
+      formData.append('emailCorporativo', emailCorporativo);
+      formData.append('senha', senha);
+
+      try {
+        const response = await fetch('/cadastro_tecnico', { // Alterado para o novo endpoint
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await response.json();
+        const messageDiv = document.getElementById('message');
+
+        if (data.success) {
+          messageDiv.style.color = 'green';
+          messageDiv.textContent = data.message;
+          document.getElementById('cadastroTecnicoForm').reset(); // Limpa o formulário em caso de sucesso
+        } else {
+          messageDiv.style.color = 'red';
+          messageDiv.textContent = "Erro no cadastro: " + data.message;
+        }
+      } catch (error) {
+        console.error('Erro ao enviar dados:', error);
+        const messageDiv = document.getElementById('message');
+        messageDiv.style.color = 'red';
+        messageDiv.textContent = 'Ocorreu um erro ao tentar enviar o cadastro. Tente novamente.';
+      }
+    });
+  </script>
+</body>
+</html>
