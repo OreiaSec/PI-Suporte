@@ -11,84 +11,89 @@
 
   <div class="loading-screen">
     <img src="https://i.postimg.cc/26VcMNnf/Bubble-SA-PNG.png" alt="Logo Bubble SA" class="umbrella-img" />
-    <p style="color:white; font-weight:600; margin-top: 10px;">Aguarde. Estamos preparando tudo.</p>
-  </div>
+    <p>Conectando ao Render...</p> </div>
 
   <div class="container">
-    <h2>Bubble Support</h2>
-
+    <h2>Bem-vindo ao Bubble SA!</h2>
+    <p style="color: #666; margin-bottom: 30px; font-size: 0.95em;">Preencha seus dados para cadastro:</p>
     <form id="loginForm">
       <div class="input-group">
-        <i class="fa fa-envelope"></i>
-        <input type="email" id="emailTecnico" name="emailTecnico" placeholder="E-mail" required />
+        <i class="fa fa-user"></i> <input type="text" id="nomeCompleto" name="nomeCompleto" placeholder="Nome completo" required />
       </div>
 
       <div class="input-group">
         <i class="fa fa-id-card"></i>
-        <input type="text" id="cpfTecnico" name="cpfTecnico" placeholder="CPF" required />
+        <input type="text" id="cpfCadastro" name="cpfCadastro" placeholder="CPF (apenas números)" required />
       </div>
 
       <div class="input-group">
-        <i class="fa fa-lock"></i>
-        <input type="password" id="senhaTecnico" name="senhaTecnico" placeholder="Senha" required />
+        <i class="fa fa-globe"></i>
+        <select id="pais" name="pais" style="width: 100%; padding: 15px 15px 15px 50px; border: 1px solid #ddd; border-radius: 12px; font-size: 16px; background-color: #f9f9f9; color: #333; appearance: none; -webkit-appearance: none;">
+          <option value="">Selecione seu país</option>
+          <option value="BR">Brasil</option>
+          <option value="US">Estados Unidos</option>
+          </select>
+        <i class="fa fa-chevron-down" style="left: auto; right: 18px; color: #888;"></i>
       </div>
 
-      <button type="submit">Entrar</button>
+
+      <button type="submit">Próximo</button> <button type="button" style="background-color: #e0e0e0; color: #333; margin-top: 15px;" onclick="alert('Funcionalidade de Login futura!');">
+        Já possui cadastro? Login
+      </button>
     </form>
   </div>
 
   <script>
-    // Código JavaScript para a tela de carregamento (mantido no front-end)
     window.onload = function () {
       setTimeout(() => {
         document.querySelector(".loading-screen").style.opacity = 0;
         setTimeout(() => {
           document.querySelector(".loading-screen").style.display = "none";
-          document.querySelector(".container").style.display = "flex";
+          document.body.classList.add('loading-finished'); // Adiciona a classe para mostrar o container
+          // O display:flex é ativado pela classe 'loading-finished' no CSS
         }, 1000);
       }, 3000);
     };
 
-    // Novo código JavaScript para lidar com a submissão do formulário
     document.getElementById('loginForm').addEventListener('submit', async (event) => {
       event.preventDefault(); // Impede o envio padrão do formulário
 
-      const email = document.getElementById("emailTecnico").value.trim();
-      const cpf = document.getElementById("cpfTecnico").value.trim();
-      const senha = document.getElementById("senhaTecnico").value.trim();
+      // Adapte para os novos campos da imagem de referência (Nome completo, CPF, País)
+      const nomeCompleto = document.getElementById("nomeCompleto").value.trim();
+      const cpfCadastro = document.getElementById("cpfCadastro").value.trim();
+      const pais = document.getElementById("pais").value.trim();
 
-      // Validação no lado do cliente (opcional, pois o servidor também validará)
-      if (!email || !cpf || !senha) {
+      // Validação básica no lado do cliente
+      if (!nomeCompleto || !cpfCadastro || !pais) {
         alert("Por favor, preencha todos os campos!");
         return;
       }
 
-      // Cria um objeto FormData para enviar os dados do formulário
       const formData = new FormData();
-      formData.append('emailTecnico', email);
-      formData.append('cpfTecnico', cpf);
-      formData.append('senhaTecnico', senha);
+      formData.append('nomeCompleto', nomeCompleto);
+      formData.append('cpfCadastro', cpfCadastro);
+      formData.append('pais', pais);
 
       try {
-        // Envia os dados para o seu endpoint Flask
-        const response = await fetch('/login_tecnico', {
+        // Você precisaria de um novo endpoint Flask para o cadastro, por exemplo, '/cadastro_usuario'
+        const response = await fetch('/cadastro_usuario', { // Altere o endpoint
           method: 'POST',
-          body: formData, // Envia o FormData
+          body: formData,
         });
 
-        const data = await response.json(); // Pega a resposta JSON do servidor
+        const data = await response.json();
 
         if (data.success) {
           alert(data.message);
-          // Redirecionar ou fazer algo após o login bem-sucedido
+          // Redirecionar ou fazer algo após o cadastro bem-sucedido
         } else {
-          alert("Erro no login: " + data.message);
+          alert("Erro no cadastro: " + data.message);
         }
       } catch (error) {
         console.error('Erro ao enviar dados:', error);
-        alert('Ocorreu um erro ao tentar fazer login. Tente novamente.');
+        alert('Ocorreu um erro ao tentar enviar o cadastro. Tente novamente.');
       }
     });
   </script>
-  </body>
+</body>
 </html>
