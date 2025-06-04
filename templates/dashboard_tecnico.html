@@ -10,17 +10,17 @@
         /* Variáveis CSS */
         :root {
             --sidebar-width-expanded: 250px;
-            --sidebar-width-collapsed: 80px;
-            --header-height: 70px;
+            --sidebar-width-collapsed: 80px; /* Largura da sidebar recolhida para ícones */
+            --header-height: 70px; /* Altura do novo cabeçalho */
             --main-bg-image: url('https://static8.depositphotos.com/1020804/816/i/450/depositphotos_8166031-stock-photo-abstract-background-night-sky-after.jpg');
             --sidebar-bg-color: rgba(11, 12, 42, 0.9);
             --sidebar-text-color: white;
             --sidebar-hover-bg: rgba(0, 123, 255, 0.3);
             --primary-color: #007BFF;
-            --danger-color: #dc3545;
+            --danger-color: #dc3545; /* Cor para logout */
         }
 
-        /* Estilos base do corpo */
+        /* Estilos base do corpo, adaptados para o novo layout */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -29,13 +29,13 @@
             background-size: cover;
             background-position: center;
             background-repeat: repeat;
-            display: flex;
+            display: flex; /* Usado para posicionar sidebar e main-content */
             min-height: 100vh;
             color: var(--sidebar-text-color);
-            overflow-x: hidden;
+            overflow-x: hidden; /* Evita scroll horizontal */
         }
 
-        /* Loading Screen (mantido) */
+        /* Loading Screen (mantido do seu código original) */
         .loading-screen {
             position: fixed;
             top: 0;
@@ -65,78 +65,46 @@
             to { transform: scale(1.05); }
         }
 
-        /* Container do conteúdo principal */
-        .main-content {
-            flex-grow: 1;
-            padding-top: var(--header-height);
-            padding: calc(var(--header-height) + 30px) 30px 30px 30px;
-            background-color: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(8px);
-            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.3);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            color: white;
-            min-height: calc(100vh - var(--header-height));
-            margin-left: var(--sidebar-width-collapsed);
-            transition: margin-left 0.3s ease-in-out;
-        }
-
-        /* Ajuste do main-content quando a sidebar expande */
-        .sidebar.expanded ~ .main-content {
-            margin-left: var(--sidebar-width-expanded);
-        }
-
-        .main-content h2 {
-            color: var(--primary-color);
-            margin-bottom: 20px;
-            font-size: 2.5em;
-        }
-        .main-content p {
-            font-size: 1.2em;
-            max-width: 800px;
-            line-height: 1.6;
-            color: rgba(255, 255, 255, 0.9);
-        }
-
         /* Sidebar */
         .sidebar {
-            width: var(--sidebar-width-collapsed);
+            width: var(--sidebar-width-collapsed); /* Começa recolhida */
             background-color: var(--sidebar-bg-color);
-            padding: 20px 0;
+            padding: 20px 0; /* Padding vertical, horizontal 0 para controle via padding dos itens */
             display: flex;
             flex-direction: column;
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
-            position: fixed;
+            position: fixed; /* Fixa a sidebar */
             height: 100%;
+            top: 0; /* Alinha ao topo */
+            left: 0; /* Alinha à esquerda */
             z-index: 1000;
-            transition: width 0.3s ease-in-out, left 0.3s ease-in-out;
-            overflow-y: auto;
-            align-items: flex-start;
+            transition: width 0.3s ease-in-out; /* Transição apenas para largura */
+            overflow-y: auto; /* Para scroll se o conteúdo for grande */
+            align-items: flex-start; /* Alinha itens à esquerda */
         }
 
         .sidebar.expanded {
-            width: var(--sidebar-width-expanded);
+            width: var(--sidebar-width-expanded); /* Expande ao clicar */
         }
 
         .sidebar .logo {
-            width: 100%;
-            padding: 0 15px;
+            width: 100%; /* Ocupa a largura disponível na sidebar */
+            padding: 0 15px; /* Padding interno para a logo */
             margin-bottom: 30px;
-            text-align: center;
-            display: none;
-            opacity: 0;
-            transition: opacity 0.1s ease;
+            text-align: center; /* Centraliza a imagem */
+            opacity: 0; /* Esconde por padrão */
+            max-height: 0; /* Esconde visualmente */
+            overflow: hidden;
+            transition: opacity 0.1s ease, max-height 0.3s ease;
         }
         .sidebar.expanded .logo {
-            display: block;
-            opacity: 1;
+            opacity: 1; /* Mostra a logo quando expandida */
+            max-height: 150px; /* Ou um valor que comporte a logo */
         }
         .sidebar .logo img {
             width: 100%;
             height: auto;
-            max-width: 150px;
+            max-width: 150px; /* Limite máximo para a logo */
         }
 
         .sidebar h3 {
@@ -146,54 +114,56 @@
             padding-bottom: 10px;
             width: 100%;
             text-align: center;
-            display: none;
-            opacity: 0;
-            transition: opacity 0.1s ease;
+            opacity: 0; /* Esconde por padrão */
+            max-height: 0; /* Esconde visualmente */
+            overflow: hidden;
+            transition: opacity 0.1s ease, max-height 0.3s ease;
         }
         .sidebar.expanded h3 {
-            display: block;
-            opacity: 1;
+            opacity: 1; /* Mostra o título quando expandida */
+            max-height: 50px; /* Ou um valor que comporte o título */
         }
 
         .sidebar ul {
             list-style: none;
             padding: 0;
             width: 100%;
-            flex-grow: 1;
+            flex-grow: 1; /* Ocupa o espaço disponível para a lista de navegação */
         }
 
         .sidebar ul li {
-            margin-bottom: 5px;
+            margin-bottom: 5px; /* Ajustado para um espaçamento menor */
         }
 
         .sidebar ul li a {
             color: var(--sidebar-text-color);
             text-decoration: none;
-            padding: 15px 20px;
-            display: flex;
+            padding: 15px 20px; /* Mais padding para os links */
+            display: flex; /* Para alinhar ícone e texto */
             align-items: center;
             border-radius: 8px;
             transition: background-color 0.3s ease, transform 0.2s ease;
-            white-space: nowrap;
-            overflow: hidden;
+            white-space: nowrap; /* Impede quebra de linha do texto */
+            overflow: hidden; /* Esconde o texto que ultrapassa a largura */
         }
 
         .sidebar ul li a i {
-            margin-right: 15px;
+            margin-right: 15px; /* Mais espaço entre ícone e texto */
             font-size: 1.2em;
-            width: 25px;
+            width: 25px; /* Garante que o ícone tenha um espaço fixo */
             text-align: center;
         }
         
         .sidebar ul li a .link-text {
-            display: none;
-            opacity: 0;
-            transition: opacity 0.1s ease;
+            opacity: 0; /* Esconde o texto por padrão */
+            width: 0; /* Largura zero para não ocupar espaço */
+            overflow: hidden;
+            transition: opacity 0.1s ease, width 0.1s ease;
         }
 
         .sidebar.expanded ul li a .link-text {
-            display: inline;
-            opacity: 1;
+            opacity: 1; /* Mostra o texto quando expandido */
+            width: auto; /* Permite que o texto ocupe sua largura natural */
         }
 
         .sidebar ul li a:hover {
@@ -202,13 +172,13 @@
         }
 
         .sidebar ul li a.active {
-            background-color: var(--primary-color);
+            background-color: var(--primary-color); /* Destaque para o item ativo */
         }
         
         /* Header (Topo) */
         .header {
             height: var(--header-height);
-            background-color: rgba(255, 255, 255, 0.9);
+            background-color: rgba(255, 255, 255, 0.9); /* Fundo semi-transparente para o header */
             border-bottom: 1px solid #e0e0e0;
             display: flex;
             align-items: center;
@@ -216,19 +186,19 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             position: fixed;
             top: 0;
-            left: var(--sidebar-width-collapsed);
+            left: var(--sidebar-width-collapsed); /* Começa após a sidebar recolhida */
             right: 0;
             z-index: 999;
             transition: left 0.3s ease-in-out;
-            color: #333;
+            color: #333; /* Cor do texto no header */
         }
 
         .sidebar.expanded ~ .header {
-            left: var(--sidebar-width-expanded);
+            left: var(--sidebar-width-expanded); /* Move o header quando a sidebar expande */
         }
 
         .hamburger-menu {
-            font-size: 28px;
+            font-size: 28px; /* Ícone um pouco maior */
             cursor: pointer;
             color: #333;
             margin-right: 20px;
@@ -237,14 +207,14 @@
         .header h1 {
             margin: 0;
             font-size: 24px;
-            flex-grow: 1;
+            flex-grow: 1; /* Ocupa o espaço restante */
             color: #333;
         }
 
         /* User Dropdown Styles */
         .user-dropdown {
             position: relative;
-            margin-left: auto;
+            margin-left: auto; /* Empurra para a direita */
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -267,9 +237,9 @@
             box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
             z-index: 1;
             right: 0;
-            top: 100%;
+            top: 100%; /* Abaixo do botão */
             border-radius: 8px;
-            overflow: hidden;
+            overflow: hidden; /* Garante que os cantos arredondados funcionem */
         }
         .user-dropdown-content a {
             color: black;
@@ -289,11 +259,68 @@
             display: block;
         }
 
+        /* Main Content Area */
+        .main-content {
+            margin-left: var(--sidebar-width-collapsed); /* Começa após a sidebar recolhida */
+            padding-top: var(--header-height); /* Espaçamento para o header fixo */
+            flex-grow: 1; /* Ocupa o restante da largura */
+            padding: calc(var(--header-height) + 30px) 30px 30px 30px; /* Ajusta o padding total */
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: margin-left 0.3s ease-in-out;
+            color: white; /* Cor do texto no conteúdo principal */
+            min-height: calc(100vh - var(--header-height)); /* Garante que o conteúdo principal ocupe o restante da altura */
+        }
+
+        .sidebar.expanded ~ .main-content {
+            margin-left: var(--sidebar-width-expanded); /* Move o conteúdo quando a sidebar expande */
+        }
+
+        .main-content h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+        .main-content p {
+            font-size: 1.2em;
+            max-width: 800px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* Estilos dos cards dentro do main-content */
+        .main-content > div { /* Seleciona a div que contém os cards */
+            margin-top: 40px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%; /* Garante que a div ocupe a largura completa */
+        }
+
+        .main-content > div > div { /* Seleciona os cards individuais */
+            background-color: rgba(255, 255, 255, 0.15);
+            padding: 25px;
+            border-radius: 10px;
+            flex: 1;
+            min-width: 250px;
+            max-width: 300px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            backdrop-filter: blur(5px); /* Adiciona um blur para destacar do fundo */
+        }
+
+
         /* Flash Messages */
         .flash-messages-container {
             width: 100%;
             max-width: 600px;
             margin-bottom: 20px;
+            text-align: left; /* Alinha o texto das mensagens à esquerda */
         }
         .flash-message, .flash-error {
             padding: 10px 15px;
@@ -321,28 +348,28 @@
         /* Media Queries para Responsividade */
         @media (max-width: 768px) {
             .sidebar {
-                width: 0;
-                left: -var(--sidebar-width-expanded);
+                width: 0; /* Começa totalmente escondida em mobile */
+                left: -var(--sidebar-width-expanded); /* Fora da tela */
             }
             .sidebar.expanded {
                 width: var(--sidebar-width-expanded);
-                left: 0;
+                left: 0; /* Desliza para dentro */
             }
             .header {
-                left: 0;
+                left: 0; /* Header sempre começa em 0 em mobile */
                 width: 100%;
             }
             .sidebar.expanded ~ .header {
-                left: var(--sidebar-width-expanded);
+                left: var(--sidebar-width-expanded); /* Empurra o header ao expandir */
                 width: calc(100% - var(--sidebar-width-expanded));
             }
             .main-content {
-                margin-left: 0;
+                margin-left: 0; /* Conteúdo sempre começa em 0 em mobile */
                 width: 100%;
-                padding: calc(var(--header-height) + 20px) 20px 20px 20px;
+                padding: calc(var(--header-height) + 20px) 20px 20px 20px; /* Ajusta padding */
             }
             .sidebar.expanded ~ .main-content {
-                margin-left: var(--sidebar-width-expanded);
+                margin-left: var(--sidebar-width-expanded); /* Empurra o conteúdo ao expandir */
                 width: calc(100% - var(--sidebar-width-expanded));
             }
             
@@ -355,7 +382,7 @@
                 right: 0;
                 bottom: 0;
                 background: rgba(0, 0, 0, 0.5);
-                z-index: 990;
+                z-index: 990; /* Abaixo da sidebar, acima do conteúdo */
             }
 
             .main-content h2 {
@@ -451,7 +478,9 @@
         
         function toggleSidebar() {
             sidebar.classList.toggle('expanded');
+            // Apenas adiciona a classe sidebar-open no body para mobile quando expandido
             document.body.classList.toggle('sidebar-open', sidebar.classList.contains('expanded') && window.innerWidth <= 768);
+            // Previne scroll do corpo em mobile quando sidebar está aberta
             document.body.style.overflow = sidebar.classList.contains('expanded') && window.innerWidth <= 768 ? 'hidden' : '';
         }
 
