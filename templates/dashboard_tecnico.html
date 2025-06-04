@@ -293,26 +293,8 @@
             color: rgba(255, 255, 255, 0.9);
         }
 
-        /* Estilos dos cards dentro do main-content */
-        .main-content > div { /* Seleciona a div que contém os cards */
-            margin-top: 40px;
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-            width: 100%; /* Garante que a div ocupe a largura completa */
-        }
-
-        .main-content > div > div { /* Seleciona os cards individuais */
-            background-color: rgba(255, 255, 255, 0.15);
-            padding: 25px;
-            border-radius: 10px;
-            flex: 1;
-            min-width: 250px;
-            max-width: 300px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            backdrop-filter: blur(5px); /* Adiciona um blur para destacar do fundo */
-        }
+        /* Estilos dos cards dentro do main-content (ANTIGO) */
+        /* Removido para dar lugar à seção de pesquisa */
 
 
         /* Flash Messages */
@@ -392,6 +374,183 @@
                 font-size: 1em;
             }
         }
+
+        /* Estilos para a Seção de Pesquisa de Usuários */
+        .search-section {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 900px; /* Limita a largura da seção de pesquisa */
+            margin-top: 30px;
+            color: white;
+            text-align: center;
+        }
+
+        .search-section h2 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 2em;
+        }
+
+        .search-section p {
+            font-size: 1.1em;
+            margin-bottom: 30px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .search-form {
+            display: flex;
+            flex-wrap: wrap; /* Permite quebrar linha em telas menores */
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+
+        .input-group-search {
+            position: relative;
+            flex: 1; /* Permite que os inputs se expandam */
+            min-width: 200px; /* Largura mínima para os inputs */
+            max-width: 280px; /* Largura máxima para os inputs */
+        }
+
+        .input-group-search i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #888;
+        }
+
+        .input-group-search input {
+            width: calc(100% - 60px); /* Ajusta largura para acomodar padding e ícone */
+            padding: 12px 15px 12px 45px; /* Padding para acomodar o ícone */
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1em;
+            color: #333;
+            background-color: #f8f8f8;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .input-group-search input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.2);
+            outline: none;
+        }
+
+        .search-button {
+            padding: 12px 25px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .search-results {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+        }
+
+        .search-results h3 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .table-container {
+            overflow-x: auto; /* Permite scroll horizontal em tabelas grandes */
+            background-color: rgba(255, 255, 255, 0.08); /* Fundo sutil para a tabela */
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0 auto; /* Centraliza a tabela */
+            min-width: 600px; /* Garante que a tabela não fique muito pequena */
+        }
+
+        .user-table th, .user-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            color: white; /* Cor do texto da tabela */
+        }
+
+        .user-table th {
+            background-color: rgba(0, 123, 255, 0.3); /* Fundo para o cabeçalho */
+            font-weight: bold;
+            color: white;
+            text-transform: uppercase;
+            font-size: 0.9em;
+        }
+
+        .user-table tbody tr:hover {
+            background-color: rgba(0, 123, 255, 0.1); /* Efeito hover nas linhas */
+        }
+
+        .user-table tbody tr:last-child td {
+            border-bottom: none; /* Remove a borda da última linha */
+        }
+
+        /* Estilos para células de ação (futuramente botões de editar/ver) */
+        .user-table td.actions {
+            text-align: center;
+        }
+        .user-table td.actions button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s ease;
+        }
+        .user-table td.actions button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Media Queries para responsividade da seção de pesquisa */
+        @media (max-width: 768px) {
+            .search-section {
+                padding: 20px;
+                margin-top: 20px;
+            }
+            .search-form {
+                flex-direction: column; /* Inputs empilham em telas menores */
+                align-items: center;
+            }
+            .input-group-search {
+                width: 100%;
+                max-width: 300px; /* Limita largura em mobile */
+            }
+            .search-button {
+                width: 100%;
+                max-width: 300px;
+            }
+            .user-table {
+                font-size: 0.85em; /* Diminui a fonte da tabela */
+            }
+        }
     </style>
 </head>
 <body>
@@ -445,27 +604,47 @@
             {% endif %}
         {% endwith %}
 
-        {# Conteúdo Específico do Dashboard do Técnico #}
-        <h2>Visão Geral do Sistema</h2>
-        <p>Aqui você pode ver um resumo das atividades, chamados abertos, status de equipamentos e outras informações relevantes para o seu trabalho como técnico.</p>
-        <p>Use o menu lateral para navegar entre as diferentes seções do sistema.</p>
+        {# Seção de Pesquisa de Usuários #}
+        <div class="search-section">
+            <h2>Pesquisar Usuários</h2>
+            <p>Utilize os campos abaixo para buscar informações de usuários no sistema.</p>
 
-        {# Você pode adicionar cards, gráficos, tabelas aqui #}
-        <div style="margin-top: 40px; display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
-            <div style="background-color: rgba(255, 255, 255, 0.15); padding: 25px; border-radius: 10px; flex: 1; min-width: 250px; max-width: 300px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-                <i class="fas fa-ticket-alt fa-3x" style="color: var(--primary-color); margin-bottom: 15px;"></i>
-                <h3>Chamados Abertos</h3>
-                <p style="font-size: 2em; font-weight: bold; color: white;">12</p>
-            </div>
-            <div style="background-color: rgba(255, 255, 255, 0.15); padding: 25px; border-radius: 10px; flex: 1; min-width: 250px; max-width: 300px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-                <i class="fas fa-tools fa-3x" style="color: var(--primary-color); margin-bottom: 15px;"></i>
-                <h3>Manutenções Pendentes</h3>
-                <p style="font-size: 2em; font-weight: bold; color: white;">5</p>
-            </div>
-            <div style="background-color: rgba(255, 255, 255, 0.15); padding: 25px; border-radius: 10px; flex: 1; min-width: 250px; max-width: 300px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-                <i class="fas fa-calendar-check fa-3x" style="color: var(--primary-color); margin-bottom: 15px;"></i>
-                <h3>Tarefas Concluídas (Hoje)</h3>
-                <p style="font-size: 2em; font-weight: bold; color: white;">3</p>
+            <form id="userSearchForm" class="search-form">
+                <div class="input-group-search">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="nomeUsuario" name="nomeUsuario" placeholder="Nome do Usuário">
+                </div>
+                <div class="input-group-search">
+                    <i class="fas fa-id-card"></i>
+                    <input type="text" id="cpfUsuario" name="cpfUsuario" placeholder="CPF do Usuário">
+                </div>
+                <div class="input-group-search">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="emailUsuario" name="emailUsuario" placeholder="E-mail do Usuário">
+                </div>
+                <button type="submit" class="search-button">
+                    <i class="fas fa-search"></i> Pesquisar
+                </button>
+            </form>
+
+            <div class="search-results" id="searchResults">
+                <h3>Resultados da Pesquisa</h3>
+                <div class="table-container">
+                    <table class="user-table">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>CPF</th>
+                                <th>E-mail</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="5">Nenhum usuário encontrado.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -540,6 +719,68 @@
                 sidebar.classList.remove('expanded');
             }
         });
+
+        // JavaScript para lidar com a pesquisa de usuários
+        const userSearchForm = document.getElementById('userSearchForm');
+        const searchResultsTableBody = document.querySelector('.user-table tbody');
+
+        userSearchForm.addEventListener('submit', function(event) {
+            event.preventDefault(); // Impede o envio padrão do formulário
+
+            const nome = document.getElementById('nomeUsuario').value;
+            const cpf = document.getElementById('cpfUsuario').value;
+            const email = document.getElementById('emailUsuario').value;
+
+            // TODO: Enviar esses dados para o Flask (backend)
+            // Por enquanto, vamos simular alguns resultados
+
+            console.log('Pesquisando por:', { nome, cpf, email });
+
+            // Simulação de dados de usuários
+            const simulatedUsers = [
+                { nome: 'João Silva', cpf: '123.456.789-00', email: 'joao.s@example.com', status: 'Ativo' },
+                { nome: 'Maria Santos', cpf: '987.654.321-00', email: 'maria.s@example.com', status: 'Inativo' },
+                { nome: 'Pedro Costa', cpf: '111.222.333-44', email: 'pedro.c@example.com', status: 'Ativo' }
+            ];
+
+            // Filtra os usuários simulados com base nos inputs (um filtro bem básico)
+            const filteredUsers = simulatedUsers.filter(user => {
+                const matchNome = nome ? user.nome.toLowerCase().includes(nome.toLowerCase()) : true;
+                const matchCpf = cpf ? user.cpf.includes(cpf) : true;
+                const matchEmail = email ? user.email.toLowerCase().includes(email.toLowerCase()) : true;
+                return matchNome && matchCpf && matchEmail;
+            });
+
+            // Limpa os resultados anteriores
+            searchResultsTableBody.innerHTML = '';
+
+            if (filteredUsers.length > 0) {
+                filteredUsers.forEach(user => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${user.nome}</td>
+                        <td>${user.cpf}</td>
+                        <td>${user.email}</td>
+                        <td>${user.status}</td>
+                        <td class="actions">
+                            <button onclick="viewUserDetails('${user.email}')">Ver Detalhes</button>
+                        </td>
+                    `;
+                    searchResultsTableBody.appendChild(row);
+                });
+            } else {
+                const noResultsRow = document.createElement('tr');
+                noResultsRow.innerHTML = `<td colspan="5">Nenhum usuário encontrado.</td>`;
+                searchResultsTableBody.appendChild(noResultsRow);
+            }
+        });
+
+        // Exemplo de função para "Ver Detalhes"
+        function viewUserDetails(email) {
+            alert('Ação: Ver detalhes do usuário com e-mail: ' + email);
+            // Aqui você idealmente faria um redirecionamento ou abriria um modal
+            // Ex: window.location.href = '/user_details/' + email;
+        }
     </script>
 </body>
 </html>
