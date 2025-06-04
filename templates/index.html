@@ -72,7 +72,6 @@
             opacity: 0; /* Esconde até o loading terminar */
             transform: translateY(20px);
             transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-            /* Adicione padding-top ou margin-top aqui se a flash message estiver muito colada */
             padding-top: 20px; /* Adiciona um padding extra no topo do container para acomodar a flash message */
         }
 
@@ -99,7 +98,7 @@
 
         .input-group i {
             position: absolute;
-            left: 15px;
+            left: 10px; /* AJUSTADO PARA MOVER O ÍCONE PARA A ESQUERDA */
             top: 50%;
             transform: translateY(-50%);
             color: #888;
@@ -107,7 +106,7 @@
 
         .input-group input {
             width: calc(100% - 60px);
-            padding: 15px 15px 15px 50px;
+            padding: 15px 15px 15px 40px; /* AJUSTADO PARA DIMINUIR O PADDING ESQUERDO DO INPUT */
             border: 1px solid #ccc;
             border-radius: 8px;
             font-size: 1em;
@@ -146,7 +145,6 @@
             width: 100%; /* Ocupa a largura total do container */
             margin-bottom: 20px; /* Espaço abaixo da mensagem e acima do título */
             text-align: center; /* Centraliza o texto das mensagens */
-            /* REMOVIDAS: position: absolute, top, left, transform */
         }
         .flash-message, .flash-error {
             padding: 10px 15px;
