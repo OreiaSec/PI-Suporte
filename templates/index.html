@@ -199,16 +199,18 @@
 
         <h2>Bem-vindo ao Sistema de Consultas</h2>
         <p style="color: #666; margin-bottom: 30px; font-size: 0.95em;">Preencha seus dados para acessar o sistema:</p>
-
-        <form id="loginForm" action="/login" method="POST">
+        <form id="cadastroTecnicoForm" action="/cadastro_tecnico" method="POST">
             <div class="input-group">
-                <i class="fa fa-envelope"></i> 
-                <input type="email" id="emailCorporativo" name="emailCorporativo" placeholder="E-mail Corporativo" required />
+                <i class="fa fa-user"></i>
+                <input type="text" id="nomeTecnico" name="nomeTecnico" placeholder="Nome do Técnico" required />
             </div>
 
             <div class="input-group">
-                <i class="fa fa-lock"></i> 
-                <input type="password" id="senha" name="senha" placeholder="Senha" required />
+                <i class="fa fa-envelope"></i> <input type="email" id="emailCorporativo" name="emailCorporativo" placeholder="E-mail Corporativo" required />
+            </div>
+
+            <div class="input-group">
+                <i class="fa fa-lock"></i> <input type="password" id="senha" name="senha" placeholder="Senha" required />
             </div>
 
             <button type="submit">Entrar</button>
@@ -226,62 +228,37 @@
                 }, 1000);
             }, 3000);
 
-            // Lógica de envio do formulário de LOGIN
-            const loginForm = document.getElementById('loginForm'); // <--- ID ALTERADO AQUI
+            // Lógica de envio do formulário de cadastro de técnico
+            const cadastroTecnicoForm = document.getElementById('cadastroTecnicoForm');
 
-            if (loginForm) { // Verifica se o formulário existe
-                loginForm.addEventListener('submit', async function(event) { // Usando async/await para clareza
-                    event.preventDefault(); // Impede o envio padrão do formulário
+            cadastroTecnicoForm.addEventListener('submit', function(event) {
+                event.preventDefault(); // Impede o envio padrão do formulário
 
-                    const formData = new FormData(loginForm);
-                    // Não precisamos do nomeTecnico para login, apenas email e senha
-                    // const data = Object.fromEntries(formData.entries()); // Não é mais necessário se enviar formData diretamente
+                const formData = new FormData(cadastroTecnicoForm);
+                const data = Object.fromEntries(formData.entries());
 
-                    try {
-                        const response = await fetch('/login', { // <--- ROTA ALTERADA AQUI
-                            method: 'POST',
-                            // headers: {
-                            //     'Content-Type': 'application/x-www-form-urlencoded', // FormData já configura isso
-                            // },
-                            body: formData // Envia os dados do formulário como FormData
-                        });
-
-                        // Se a resposta não for OK (status 2xx), lança um erro para o bloco catch
-                        if (!response.ok) {
-                            const errorData = await response.json();
-                            throw new Error(errorData.message || 'Erro no servidor');
-                        }
-
-                        const result = await response.json(); // Pega a resposta JSON
-
-                        if (result.success && result.redirect) {
-                            window.location.href = result.redirect; // Redireciona para a nova tela
-                        } else {
-                            // Isso deve ser raro com a verificação response.ok, mas é um fallback
-                            console.error("Erro inesperado no login:", result.message);
-                            // As flash messages do Flask deveriam cuidar disso, mas um alert pode ser um fallback
-                            alert(result.message || "Login falhou. Verifique e-mail e senha.");
-                        }
-                    } catch (error) {
-                        console.error('Erro ao fazer login:', error);
-                        // A mensagem de erro que vem do backend será exibida via flash message
-                        // Se for um erro de rede ou JS, este alert vai aparecer
-                        alert(error.message || 'Ocorreu um erro ao tentar fazer login. Tente novamente.');
+                fetch('/cadastro_tecnico', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams(data).toString(),
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success && result.redirect) {
+                        window.location.href = result.redirect; // Redireciona para a nova tela
+                    } else {
+                        // As flash messages serão exibidas automaticamente pelo Jinja2
+                        // Aqui você pode adicionar um console.error ou outra lógica se precisar de mais feedback
+                        console.error("Erro no login:", result.message);
                     }
+                })
+                .catch(error => {
+                    console.error('Erro na requisição ou no servidor:', error);
+                    // O Flask deve gerar uma flash message de erro se a rota retornar um erro HTTP
                 });
-            }
-
-            // O código para exibir as flash messages do Flask já está ok
-            // O Jinja2 já renderiza elas. O JS abaixo é mais para um auto-hide, se quiser.
-            const flashMessagesContainer = document.querySelector('.flash-messages-container');
-            if (flashMessagesContainer) {
-                setTimeout(() => {
-                    flashMessagesContainer.style.opacity = 0;
-                    setTimeout(() => {
-                        flashMessagesContainer.style.display = 'none';
-                    }, 500); // tempo para o fade out
-                }, 5000); // 5 segundos para a mensagem ficar visível
-            }
+            });
         });
     </script>
 </body>
