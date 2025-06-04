@@ -1,95 +1,885 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Bubble Support</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Bubble Support</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" /> {# Adicionado o CSS do Leaflet para o mapa #}
+    <style>
+        /* Variáveis CSS */
+        :root {
+            --sidebar-width-expanded: 250px;
+            --sidebar-width-collapsed: 80px; /* Largura da sidebar recolhida para ícones */
+            --header-height: 70px; /* Altura do novo cabeçalho */
+            --main-bg-image: url('https://static8.depositphotos.com/1020804/816/i/450/depositphotos_8166031-stock-photo-abstract-background-night-sky-after.jpg');
+            --sidebar-bg-color: rgba(11, 12, 42, 0.9);
+            --sidebar-text-color: white;
+            --sidebar-hover-bg: rgba(0, 123, 255, 0.3);
+            --primary-color: #007BFF;
+            --danger-color: #dc3545; /* Cor para logout */
+        }
+
+        /* Estilos base do corpo, adaptados para o novo layout */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: var(--main-bg-image);
+            background-size: cover;
+            background-position: center;
+            background-repeat: repeat;
+            display: flex; /* Usado para posicionar sidebar e main-content */
+            min-height: 100vh;
+            color: var(--sidebar-text-color);
+            overflow-x: hidden; /* Evita scroll horizontal */
+        }
+
+        /* Loading Screen (mantido do seu código original) */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 1s ease-out;
+            color: white;
+            font-size: 1.2em;
+        }
+
+        .loading-screen .umbrella-img {
+            width: 150px;
+            height: auto;
+            margin-bottom: 20px;
+            animation: pulse 1.5s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
+        }
+
+        /* Container do formulário (adaptado para o novo layout) */
+        .container {
+            flex-grow: 1; /* Ocupa o restante da largura */
+            padding-top: var(--header-height); /* Espaçamento para o header fixo */
+            padding: calc(var(--header-height) + 30px) 30px 30px 30px; /* Ajusta o padding total */
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            color: white;
+            min-height: calc(100vh - var(--header-height));
+            margin-left: var(--sidebar-width-collapsed); /* Começa após a sidebar recolhida */
+            transition: margin-left 0.3s ease-in-out;
+            
+            /* Adicionado para o formulário */
+            max-width: 600px; /* Limita a largura do formulário */
+            margin: 0 auto; /* Centraliza o formulário */
+            padding: 40px;
+            border-radius: 10px;
+            background-color: rgba(255, 255, 255, 0.95); /* Fundo claro para o formulário */
+            color: #333; /* Cor do texto dentro do formulário */
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        /* Ajuste do container quando a sidebar expande */
+        .sidebar.expanded ~ .container { /* Alterado de .main-content para .container */
+            margin-left: var(--sidebar-width-expanded); /* Move o container quando a sidebar expande */
+        }
+
+
+        .container h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 25px;
+            width: 100%;
+            max-width: 350px;
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #888;
+        }
+
+        .input-group input {
+            width: calc(100% - 60px); /* Ajusta a largura do input */
+            padding: 15px 15px 15px 50px; /* Mais padding à esquerda para o ícone */
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1em;
+            color: #333;
+            background-color: #f8f8f8;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .input-group input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.2);
+            outline: none;
+        }
+
+        .container button[type="submit"] {
+            width: 100%;
+            max-width: 350px;
+            padding: 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+        }
+
+        .container button[type="submit"]:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        #message {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width-collapsed); /* Começa recolhida */
+            background-color: var(--sidebar-bg-color);
+            padding: 20px 0; /* Padding vertical, horizontal 0 para controle via padding dos itens */
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+            position: fixed; /* Fixa a sidebar */
+            height: 100%;
+            z-index: 1000;
+            transition: width 0.3s ease-in-out, left 0.3s ease-in-out; /* Transição para largura e posição */
+            overflow-y: auto; /* Para scroll se o conteúdo for grande */
+            align-items: flex-start; /* Alinha itens à esquerda */
+        }
+
+        .sidebar.expanded {
+            width: var(--sidebar-width-expanded); /* Expande ao clicar */
+        }
+
+        .sidebar .logo {
+            width: 100%; /* Ocupa a largura disponível na sidebar */
+            padding: 0 15px; /* Padding interno para a logo */
+            margin-bottom: 30px;
+            text-align: center; /* Centraliza a imagem */
+            display: none; /* Esconde por padrão */
+            opacity: 0;
+            transition: opacity 0.1s ease;
+        }
+        .sidebar.expanded .logo {
+            display: block; /* Mostra a logo quando expandida */
+            opacity: 1;
+        }
+        .sidebar .logo img {
+            width: 100%;
+            height: auto;
+            max-width: 150px; /* Limite máximo para a logo */
+        }
+
+        .sidebar h3 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            padding-bottom: 10px;
+            width: 100%;
+            text-align: center;
+            display: none; /* Esconde por padrão */
+            opacity: 0;
+            transition: opacity 0.1s ease;
+        }
+        .sidebar.expanded h3 {
+            display: block; /* Mostra o título quando expandida */
+            opacity: 1;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            width: 100%;
+            flex-grow: 1; /* Ocupa o espaço disponível para a lista de navegação */
+        }
+
+        .sidebar ul li {
+            margin-bottom: 5px; /* Ajustado para um espaçamento menor */
+        }
+
+        .sidebar ul li a {
+            color: var(--sidebar-text-color);
+            text-decoration: none;
+            padding: 15px 20px; /* Mais padding para os links */
+            display: flex; /* Para alinhar ícone e texto */
+            align-items: center;
+            border-radius: 8px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            white-space: nowrap; /* Impede quebra de linha do texto */
+            overflow: hidden; /* Esconde o texto que ultrapassa a largura */
+        }
+
+        .sidebar ul li a i {
+            margin-right: 15px; /* Mais espaço entre ícone e texto */
+            font-size: 1.2em;
+            width: 25px; /* Garante que o ícone tenha um espaço fixo */
+            text-align: center;
+        }
+        
+        .sidebar ul li a .link-text {
+            display: none; /* Esconde o texto por padrão */
+            opacity: 0;
+            transition: opacity 0.1s ease;
+        }
+
+        .sidebar.expanded ul li a .link-text {
+            display: inline; /* Mostra o texto quando expandido */
+            opacity: 1;
+        }
+
+        .sidebar ul li a:hover {
+            background-color: var(--sidebar-hover-bg);
+            transform: translateX(5px);
+        }
+
+        .sidebar ul li a.active {
+            background-color: var(--primary-color); /* Destaque para o item ativo */
+        }
+        
+        /* Header (Topo) */
+        .header {
+            height: var(--header-height);
+            background-color: rgba(255, 255, 255, 0.9); /* Fundo semi-transparente para o header */
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width-collapsed); /* Começa após a sidebar recolhida */
+            right: 0;
+            z-index: 999;
+            transition: left 0.3s ease-in-out;
+            color: #333; /* Cor do texto no header */
+        }
+
+        .sidebar.expanded ~ .header {
+            left: var(--sidebar-width-expanded); /* Move o header quando a sidebar expande */
+        }
+
+        .hamburger-menu {
+            font-size: 28px; /* Ícone um pouco maior */
+            cursor: pointer;
+            color: #333;
+            margin-right: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            flex-grow: 1; /* Ocupa o espaço restante */
+            color: #333;
+        }
+
+        /* User Dropdown Styles */
+        .user-dropdown {
+            position: relative;
+            margin-left: auto; /* Empurra para a direita */
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: background-color 0.2s ease;
+        }
+        .user-dropdown:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        .user-dropdown i {
+            margin-right: 8px;
+            color: var(--primary-color);
+        }
+        .user-dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            right: 0;
+            top: 100%; /* Abaixo do botão */
+            border-radius: 8px;
+            overflow: hidden; /* Garante que os cantos arredondados funcionem */
+        }
+        .user-dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            transition: background-color 0.2s ease;
+        }
+        .user-dropdown-content a:hover {
+            background-color: #f1f1f1;
+        }
+        .user-dropdown-content a i {
+            margin-right: 10px;
+            color: #555;
+        }
+        .user-dropdown.show .user-dropdown-content {
+            display: block;
+        }
+
+        /* Main Content Area (adaptação para o formulário) */
+        .main-content {
+            margin-left: var(--sidebar-width-collapsed); /* Começa após a sidebar recolhida */
+            padding-top: var(--header-height); /* Espaçamento para o header fixo */
+            flex-grow: 1; /* Ocupa o restante da largura */
+            padding: calc(var(--header-height) + 30px) 30px 30px 30px; /* Ajusta o padding total */
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: margin-left 0.3s ease-in-out;
+            color: white; /* Cor do texto no conteúdo principal */
+            min-height: calc(100vh - var(--header-height)); /* Garante que o conteúdo principal ocupe o restante da altura */
+        }
+
+        .sidebar.expanded ~ .main-content {
+            margin-left: var(--sidebar-width-expanded); /* Move o conteúdo quando a sidebar expande */
+        }
+
+        /* Flash Messages */
+        .flash-messages-container {
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 20px;
+        }
+        .flash-message, .flash-error {
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .flash-message {
+            background-color: rgba(40, 167, 69, 0.1);
+            border: 1px solid #28a745;
+            color: #28a745;
+        }
+        .flash-error {
+            background-color: rgba(220, 53, 69, 0.1);
+            border: 1px solid #dc3545;
+            color: #dc3545;
+        }
+        .flash-message i, .flash-error i {
+            font-size: 1.2em;
+        }
+
+        /* Estilo para o mapa */
+        #mapid {
+            height: 400px; /* Altura fixa para o mapa */
+            width: 100%; /* Largura total */
+            max-width: 800px; /* Largura máxima para o mapa */
+            border-radius: 15px; /* Bordas arredondadas */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); /* Sombra para destaque */
+            margin-top: 30px; /* Espaçamento superior */
+            background-color: #333; /* Cor de fundo enquanto o mapa carrega */
+        }
+
+        /* Overlay para o popup de retirada de guarda-chuva */
+        .umbrella-overlay {
+            display: none; /* Escondido por padrão */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); /* Fundo escurecido */
+            z-index: 1001; /* Acima de tudo */
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .umbrella-overlay.active {
+            display: flex; /* Mostra quando ativo */
+            opacity: 1;
+        }
+
+        .umbrella-overlay-content {
+            background-color: rgba(255, 255, 255, 0.95); /* Fundo semi-transparente claro */
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+            color: #333; /* Cor do texto no popup */
+            max-width: 90%;
+            width: 400px;
+            transform: scale(0.9); /* Começa um pouco menor */
+            transition: transform 0.3s ease-in-out;
+            position: relative; /* Para posicionar o botão de fechar */
+        }
+
+        .umbrella-overlay.active .umbrella-overlay-content {
+            transform: scale(1); /* Expande para o tamanho normal */
+        }
+
+        .umbrella-overlay-content i.fa-umbrella {
+            font-size: 80px; /* Tamanho do ícone de guarda-chuva */
+            color: var(--primary-color); /* Cor do ícone */
+            margin-bottom: 20px;
+            animation: bounce 0.8s infinite alternate; /* Animação simples */
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-10px); }
+        }
+
+        .umbrella-overlay-content h2 {
+            margin-top: 0;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+            color: #333;
+        }
+
+        .umbrella-overlay-content .input-group {
+            margin-bottom: 20px;
+        }
+
+        /* Estiliza o código gerado como um display */
+        .generated-code {
+            font-size: 2.2em; /* Tamanho maior para o código */
+            font-weight: bold;
+            color: var(--primary-color); /* Cor destacada */
+            background-color: #e0e0e0;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+            letter-spacing: 3px; /* Espaçamento entre caracteres */
+            display: inline-block; /* Para o padding funcionar */
+            min-width: 150px; /* Garante que a caixa tenha um tamanho mínimo */
+        }
+
+
+        .umbrella-overlay-content .btn-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #888;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+        .umbrella-overlay-content .btn-close:hover {
+            color: #333;
+        }
+
+        /* Media Queries para Responsividade */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 0; /* Começa totalmente escondida em mobile */
+                left: -var(--sidebar-width-expanded); /* Fora da tela */
+            }
+            .sidebar.expanded {
+                width: var(--sidebar-width-expanded);
+                left: 0; /* Desliza para dentro */
+            }
+            .header {
+                left: 0; /* Header sempre começa em 0 em mobile */
+                width: 100%;
+            }
+            .sidebar.expanded ~ .header {
+                left: var(--sidebar-width-expanded); /* Empurra o header ao expandir */
+                width: calc(100% - var(--sidebar-width-expanded));
+            }
+            .container { /* Alterado de .main-content para .container */
+                margin-left: 0; /* Conteúdo sempre começa em 0 em mobile */
+                width: 100%;
+                padding: calc(var(--header-height) + 20px) 20px 20px 20px; /* Ajusta padding */
+            }
+            .sidebar.expanded ~ .container { /* Alterado de .main-content para .container */
+                margin-left: var(--sidebar-width-expanded); /* Empurra o conteúdo ao expandir */
+                width: calc(100% - var(--sidebar-width-expanded));
+            }
+            
+            /* Overlay quando sidebar expandida em mobile */
+            body.sidebar-open::after {
+                content: '';
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 990; /* Abaixo da sidebar, acima do conteúdo */
+            }
+
+            .container h2 {
+                font-size: 2em;
+            }
+            .container p {
+                font-size: 1em;
+            }
+            #mapid {
+                height: 300px; /* Ajusta a altura do mapa em mobile */
+            }
+            .umbrella-overlay-content {
+                padding: 20px;
+            }
+            .umbrella-overlay-content i.fa-umbrella {
+                font-size: 60px;
+            }
+            .umbrella-overlay-content h2 {
+                font-size: 1.5em;
+            }
+            .generated-code {
+                font-size: 1.8em;
+            }
+        }
+    </style>
 </head>
 <body>
 
-  <div class="loading-screen">
-    <img src="https://i.postimg.cc/26VcMNnf/Bubble-SA-PNG.png" alt="Logo Bubble SA" class="umbrella-img" />
-    <p>Conectando ao Render...</p>
-  </div>
+    <div class="loading-screen">
+        <img src="https://i.postimg.cc/26VcMNnf/Bubble-SA-PNG.png" alt="Logo Bubble SA" class="umbrella-img" />
+        <p>Conectando ao Render...</p>
+    </div>
 
-  <div class="container">
-    <h2>Bem-vindo ao Sistema de Consultas</h2>
-    <p style="color: #666; margin-bottom: 30px; font-size: 0.95em;">Preencha seus dados acessar o sistema:</p>
-    <form id="cadastroTecnicoForm" action="/cadastro_tecnico" method="POST">
-      <div class="input-group">
-        <i class="fa fa-user"></i>
-        <input type="text" id="nomeTecnico" name="nomeTecnico" placeholder="Nome do Técnico" required />
-      </div>
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <img src="https://i.postimg.cc/26VcMNnf/Bubble-SA-PNG.png" alt="Logo Bubble SA">
+        </div>
+        <h3>Menu</h3>
+        <ul>
+            <li><a href="#" class="active"><i class="fas fa-home"></i> <span class="link-text">Dashboard</span></a></li>
+            <li><a href="#"><i class="fas fa-bell"></i> <span class="link-text">Notificações</span></a></li>
+            <li><a href="#"><i class="fas fa-cog"></i> <span class="link-text">Configurações</span></a></li>
+            <li><a href="#"><i class="fas fa-question-circle"></i> <span class="link-text">Ajuda</span></a></li>
+        </ul>
+    </aside>
 
-      <div class="input-group">
-        <i class="fa fa-envelope"></i> <input type="email" id="emailCorporativo" name="emailCorporativo" placeholder="E-mail Corporativo" required />
-      </div>
+    <div class="header">
+        <i class="fas fa-bars hamburger-menu" id="hamburgerMenu"></i>
+        <h1>Dashboard</h1> {# O título pode ser ajustado para "Login" ou "Cadastro" #}
+        
+        <div class="user-dropdown" id="userDropdown">
+            <i class="fas fa-user-circle"></i>Bem-vindo, {{ user_name }}!
+            <div class="user-dropdown-content">
+                <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Sair</a>
+            </div>
+        </div>
+    </div>
 
-      <div class="input-group">
-        <i class="fa fa-lock"></i> <input type="password" id="senha" name="senha" placeholder="Senha" required />
-      </div>
+    <main class="container" id="mainContent"> {# Alterado de .main-content para .container #}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages-container">
+                    {% for category, message in messages %}
+                        <div class="flash-{{ category }}">
+                            {% if category == 'message' %}
+                                <i class="fas fa-check-circle"></i>
+                            {% else %}
+                                <i class="fas fa-exclamation-triangle"></i>
+                            {% endif %}
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
 
-      <button type="submit">Entrar</button>
-      </form>
-    <div id="message" style="margin-top: 20px; text-align: center; font-weight: bold;"></div>
-  </div>
+        {# Conteúdo do formulário de cadastro que você já tinha #}
+        <h2>Bem-vindo ao Sistema de Consultas</h2>
+        <p style="color: #666; margin-bottom: 30px; font-size: 0.95em;">Preencha seus dados acessar o sistema:</p>
+        <form id="cadastroTecnicoForm" action="/cadastro_tecnico" method="POST">
+            <div class="input-group">
+                <i class="fa fa-user"></i>
+                <input type="text" id="nomeTecnico" name="nomeTecnico" placeholder="Nome do Técnico" required />
+            </div>
 
-  <script>
-    window.onload = function () {
-      setTimeout(() => {
-        document.querySelector(".loading-screen").style.opacity = 0;
-        setTimeout(() => {
-          document.querySelector(".loading-screen").style.display = "none";
-          document.body.classList.add('loading-finished'); // Adiciona a classe para mostrar o container
-        }, 1000);
-      }, 3000);
-    };
+            <div class="input-group">
+                <i class="fa fa-envelope"></i> <input type="email" id="emailCorporativo" name="emailCorporativo" placeholder="E-mail Corporativo" required />
+            </div>
 
-    document.getElementById('cadastroTecnicoForm').addEventListener('submit', async (event) => {
-      event.preventDefault(); // Impede o envio padrão do formulário
+            <div class="input-group">
+                <i class="fa fa-lock"></i> <input type="password" id="senha" name="senha" placeholder="Senha" required />
+            </div>
 
-      const nomeTecnico = document.getElementById("nomeTecnico").value.trim();
-      const emailCorporativo = document.getElementById("emailCorporativo").value.trim();
-      const senha = document.getElementById("senha").value.trim();
+            <button type="submit">Entrar</button>
+        </form>
+        <div id="message" style="margin-top: 20px; text-align: center; font-weight: bold;"></div>
 
-      // Validação básica no lado do cliente
-      if (!nomeTecnico || !emailCorporativo || !senha) {
-        document.getElementById('message').style.color = 'red';
-        document.getElementById('message').textContent = "Por favor, preencha todos os campos!";
-        return;
-      }
+        {# O mapa e o botão de guarda-chuva foram adicionados aqui, pois pertencem à tela do cliente #}
+        <h1>Visão Geral do Mapa</h1>
+        <p>Acompanhe a localização dos nossos postos de retirada em tempo real!</p>
+        
+        <div id="mapid"></div>
 
-      const formData = new FormData();
-      formData.append('nomeTecnico', nomeTecnico);
-      formData.append('emailCorporativo', emailCorporativo);
-      formData.append('senha', senha);
+        <button id="umbrellaActionButton" class="action-button">Retirar um guarda-chuva</button>
 
-      try {
-        const response = await fetch('/cadastro_tecnico', { // Alterado para o novo endpoint
-          method: 'POST',
-          body: formData,
+    </main>
+
+    <div id="umbrellaOverlay" class="umbrella-overlay">
+        <div class="umbrella-overlay-content">
+            <button class="btn-close" id="closeUmbrellaOverlay">&times;</button>
+            <i class="fas fa-umbrella"></i> <h2>Seu Código de Retirada</h2>
+            <div class="generated-code" id="retrievalCodeDisplay"></div>
+            <button class="action-button" id="confirmOkButton">OK</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const hamburgerMenu = document.getElementById('hamburgerMenu');
+        const userDropdown = document.getElementById('userDropdown');
+        
+        // Novos elementos para o overlay
+        const umbrellaActionButton = document.getElementById('umbrellaActionButton');
+        const umbrellaOverlay = document.getElementById('umbrellaOverlay');
+        const closeUmbrellaOverlay = document.getElementById('closeUmbrellaOverlay');
+        const retrievalCodeDisplay = document.getElementById('retrievalCodeDisplay'); // Elemento para exibir o código
+        const confirmOkButton = document.getElementById('confirmOkButton'); // Novo botão OK
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('expanded');
+            document.body.classList.toggle('sidebar-open', sidebar.classList.contains('expanded') && window.innerWidth <= 768);
+            document.body.style.overflow = sidebar.classList.contains('expanded') && window.innerWidth <= 768 ? 'hidden' : '';
+        }
+
+        function toggleUserDropdown() {
+            userDropdown.classList.toggle('show');
+        }
+
+        // Função para gerar um código aleatório de 6 caracteres (letras e números maiúsculos)
+        function generateRandomCode(length) {
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            const charactersLength = characters.length;
+            for (let i = 0; i < length; i++) {
+                result += characters.charAt(Math.floor(Math.random() * charactersLength));
+            }
+            return result;
+        }
+
+        hamburgerMenu.addEventListener('click', toggleSidebar);
+        userDropdown.addEventListener('click', toggleUserDropdown);
+
+        // Funções para o overlay do guarda-chuva
+        umbrellaActionButton.addEventListener('click', () => {
+            // Gera e exibe o código antes de mostrar o overlay
+            retrievalCodeDisplay.textContent = generateRandomCode(6);
+            umbrellaOverlay.classList.add('active');
         });
 
-        const data = await response.json();
-        const messageDiv = document.getElementById('message');
+        closeUmbrellaOverlay.addEventListener('click', () => {
+            umbrellaOverlay.classList.remove('active');
+        });
 
-        if (data.success) {
-          messageDiv.style.color = 'green';
-          messageDiv.textContent = data.message;
-          document.getElementById('cadastroTecnicoForm').reset(); // Limpa o formulário em caso de sucesso
-        } else {
-          messageDiv.style.color = 'red';
-          messageDiv.textContent = "Erro no cadastro: " + data.message;
-        }
-      } catch (error) {
-        console.error('Erro ao enviar dados:', error);
-        const messageDiv = document.getElementById('message');
-        messageDiv.style.color = 'red';
-        messageDiv.textContent = 'Ocorreu um erro ao tentar enviar o cadastro. Tente novamente.';
-      }
-    });
-  </script>
+        // Ação do botão "OK" no overlay
+        confirmOkButton.addEventListener('click', () => {
+            const generatedCode = retrievalCodeDisplay.textContent;
+
+            // Faz a requisição POST para o backend
+            fetch('/registrar_retirada', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ codigo: generatedCode })
+            })
+            .then(response => {
+                // Verifica se a resposta HTTP é OK (status 2xx)
+                if (!response.ok) {
+                    // Se a resposta não for OK, tenta ler a mensagem de erro do backend
+                    return response.json().then(errData => {
+                        throw new Error(errData.message || 'Erro desconhecido ao registrar retirada.');
+                    });
+                }
+                return response.json(); // Se OK, parseia o JSON
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Guarda-chuva retirado com sucesso! Código: ' + generatedCode + '. ' + data.message);
+                    umbrellaOverlay.classList.remove('active'); // Fecha o overlay após sucesso
+                } else {
+                    // Este bloco será acionado se o backend retornar status 200 mas com status:'error' no JSON
+                    alert('Erro ao registrar retirada: ' + data.message);
+                }
+            })
+            .catch(error => {
+                // Captura erros de rede ou erros lançados pelo .then(response => { ... })
+                console.error('Erro na requisição ou no servidor:', error);
+                alert('Ocorreu um erro ao tentar registrar a retirada: ' + error.message);
+            });
+        });
+
+        // Fechar overlay clicando fora do conteúdo (mas não no botão que o abre)
+        umbrellaOverlay.addEventListener('click', (event) => {
+            if (event.target === umbrellaOverlay) { // Verifica se o clique foi diretamente no fundo do overlay
+                umbrellaOverlay.classList.remove('active');
+            }
+        });
+
+
+        // Close dropdown if clicked outside
+        document.addEventListener('click', function(event) {
+            if (!userDropdown.contains(event.target)) {
+                userDropdown.classList.remove('show');
+            }
+            // Logic for sidebar closing on outside click (already there)
+            if (window.innerWidth <= 768 && sidebar.classList.contains('expanded')) {
+                const isClickInsideSidebar = sidebar.contains(event.target);
+                const isClickOnHamburger = hamburgerMenu.contains(event.target);
+
+                if (!isClickInsideSidebar && !isClickOnHamburger) {
+                    toggleSidebar();
+                }
+            }
+        });
+
+        // Initialize sidebar state on load and resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                sidebar.classList.add('expanded'); // Always expanded on desktop
+                document.body.classList.remove('sidebar-open');
+                document.body.style.overflow = '';
+            } else {
+                sidebar.classList.remove('expanded'); // Always collapsed on mobile
+                document.body.classList.remove('sidebar-open');
+                document.body.style.overflow = '';
+            }
+            // Close dropdown on resize if it was open
+            userDropdown.classList.remove('show');
+        });
+
+        // Inicializa o Leaflet Map e as funções de JavaScript da sidebar, etc.
+        document.addEventListener('DOMContentLoaded', function() {
+            // Remove o screen de carregamento.
+            setTimeout(() => {
+                document.querySelector(".loading-screen").style.opacity = 0;
+                setTimeout(() => {
+                    document.querySelector(".loading-screen").style.display = "none";
+                    document.body.classList.add('loading-finished'); // Adiciona a classe para mostrar o container
+                }, 1000);
+            }, 3000);
+
+            // Inicializa o estado da sidebar
+            if (window.innerWidth > 768) {
+                sidebar.classList.add('expanded'); // Start expanded on desktop
+            } else {
+                sidebar.classList.remove('expanded'); // Start collapsed on mobile
+            }
+
+            // Inicializa o mapa Leaflet APÓS o DOM estar carregado
+            var map = L.map('mapid').setView([-23.5505, -46.6333], 13); // Centrado em São Paulo, zoom 13
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            // Define o ícone personalizado usando sua logo.png da pasta static
+            var umbrellaIcon = L.icon({
+                iconUrl: '/static/logo.png', // Caminho para sua logo.png na pasta static
+                iconSize: [40, 40], // Tamanho ideal da sua logo (ajuste conforme necessário)
+                iconAnchor: [20, 40], // Metade da largura, altura total para a base do ícone
+                popupAnchor: [0, -40] // Para o popup aparecer acima da logo
+            });
+
+            // Adiciona marcadores para os pontos de retirada
+            L.marker([-23.5466, -46.6358], {icon: umbrellaIcon}).addTo(map)
+                .bindPopup('<b>Ponto de Retirada - Leão</b><br>Loja Do Dinho GUARDA-CHUVA ATACADO');
+
+            L.marker([-23.5413, -46.6353], {icon: umbrellaIcon}).addTo(map)
+                .bindPopup('<b>Ponto de Retirada - Tigre</b><br>Lucky star Distribuidora Guarda-chuva atacado');
+
+            L.marker([-23.5623, -46.6475], {icon: umbrellaIcon}).addTo(map)
+                .bindPopup('<b>Ponto de Retirada - Lobo</b><br>Voyagem guarda chuvas');
+
+            L.marker([-23.5839, -46.6403], {icon: umbrellaIcon}).addTo(map)
+                .bindPopup('<b>Ponto de Retirada - Urso</b><br>Ao Para Água Presentes e Consertos de Guarda-chuvas');
+
+            L.marker([-23.5042, -46.4950], {icon: umbrellaIcon}).addTo(map)
+                .bindPopup('<b>Ponto de Retirada - Águia</b><br>JLV Fabrica de Guarda-Sóis e Ombrelones Personalizados');
+        });
+
+        // Seu script original para o formulário de cadastro de técnico (mantido)
+        document.getElementById('cadastroTecnicoForm').addEventListener('submit', async (event) => {
+            event.preventDefault(); // Impede o envio padrão do formulário
+
+            const nomeTecnico = document.getElementById("nomeTecnico").value.trim();
+            const emailCorporativo = document.getElementById("emailCorporativo").value.trim();
+            const senha = document.getElementById("senha").value.trim();
+
+            // Validação básica no lado do cliente
+            if (!nomeTecnico || !emailCorporativo || !senha) {
+                document.getElementById('message').style.color = 'red';
+                document.getElementById('message').textContent = "Por favor, preencha todos os campos!";
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('nomeTecnico', nomeTecnico);
+            formData.append('emailCorporativo', emailCorporativo);
+            formData.append('senha', senha);
+
+            try {
+                const response = await fetch('/cadastro_tecnico', { // Alterado para o novo endpoint
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const data = await response.json();
+                const messageDiv = document.getElementById('message');
+
+                if (data.success) {
+                    messageDiv.style.color = 'green';
+                    messageDiv.textContent = data.message;
+                    document.getElementById('cadastroTecnicoForm').reset(); // Limpa o formulário em caso de sucesso
+                } else {
+                    messageDiv.style.color = 'red';
+                    messageDiv.textContent = "Erro no cadastro: " + data.message;
+                }
+            } catch (error) {
+                console.error('Erro ao enviar dados:', error);
+                const messageDiv = document.getElementById('message');
+                messageDiv.style.color = 'red';
+                messageDiv.textContent = 'Ocorreu um erro ao tentar enviar o cadastro. Tente novamente.';
+            }
+        });
+    </script>
 </body>
 </html>
