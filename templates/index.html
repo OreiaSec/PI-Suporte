@@ -72,6 +72,8 @@
             opacity: 0; /* Esconde até o loading terminar */
             transform: translateY(20px);
             transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+            /* Adicione padding-top ou margin-top aqui se a flash message estiver muito colada */
+            padding-top: 20px; /* Adiciona um padding extra no topo do container para acomodar a flash message */
         }
 
         /* Mostra o container após o loading terminar */
@@ -139,20 +141,17 @@
             transform: translateY(-2px);
         }
 
-        /* Flash Messages (centralizadas para a tela de login) */
+        /* Flash Messages (AGORA DENTRO DO CONTAINER E SEM POSIÇÃO ABSOLUTA) */
         .flash-messages-container {
-            position: absolute; /* Posição fixa para as mensagens */
-            top: 20px; /* Distância do topo */
-            left: 50%;
-            transform: translateX(-50%); /* Centraliza horizontalmente */
-            width: 90%;
-            max-width: 500px; /* Limita a largura */
-            z-index: 1000;
+            width: 100%; /* Ocupa a largura total do container */
+            margin-bottom: 20px; /* Espaço abaixo da mensagem e acima do título */
+            text-align: center; /* Centraliza o texto das mensagens */
+            /* REMOVIDAS: position: absolute, top, left, transform */
         }
         .flash-message, .flash-error {
             padding: 10px 15px;
             border-radius: 8px;
-            margin-bottom: 10px;
+            margin-bottom: 10px; /* Espaço entre as mensagens, se houver mais de uma */
             font-weight: bold;
             display: flex;
             align-items: center;
@@ -182,7 +181,7 @@
     </div>
 
     <div class="container">
-        {# Flash Messages #}
+        {# Flash Messages AGORA AQUI DENTRO DO CONTAINER #}
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="flash-messages-container">
