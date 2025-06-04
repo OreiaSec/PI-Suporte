@@ -8,11 +8,11 @@ app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'sua_super_chave_secreta_e_c
 
 # Configuração do Banco de Dados
 DB_CONFIG = {
-    'host': os.environ.get('DB_HOST', 'localhost'), # Valor padrão para desenvolvimento local
+    'host': os.environ.get('DB_HOST'),
     'port': int(os.environ.get('DB_PORT', 3306)),
-    'database': os.environ.get('DB_NAME', 'bubble_support_db'), # Valor padrão
-    'user': os.environ.get('DB_USER', 'root'), # Valor padrão
-    'password': os.environ.get('DB_PASSWORD', 'password'), # Valor padrão
+    'database': os.environ.get('DB_NAME'),
+    'user': os.environ.get('DB_USER'),
+    'password': os.environ.get('DB_PASSWORD'),
     'charset': 'utf8mb4',
     'collation': 'utf8mb4_unicode_ci',
     'autocommit': True,
