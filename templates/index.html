@@ -3,24 +3,17 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Bubble Support - Técnico</title>
+    <title>Bubble Support - Login Técnico</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
         /* Variáveis CSS */
         :root {
-            --sidebar-width-expanded: 250px;
-            --sidebar-width-collapsed: 80px; /* Largura da sidebar recolhida para ícones */
-            --header-height: 70px; /* Altura do novo cabeçalho */
-            --main-bg-image: url('https://static8.depositphotos.com/1020804/816/i/450/depositphotos_8166031-stock-photo-abstract-background-night-sky-after.jpg');
-            --sidebar-bg-color: rgba(11, 12, 42, 0.9);
-            --sidebar-text-color: white;
-            --sidebar-hover-bg: rgba(0, 123, 255, 0.3);
             --primary-color: #007BFF;
-            --danger-color: #dc3545; /* Cor para logout */
+            --main-bg-image: url('https://static8.depositphotos.com/1020804/816/i/450/depositphotos_8166031-stock-photo-abstract-background-night-sky-after.jpg');
         }
 
-        /* Estilos base do corpo, adaptados para o novo layout */
+        /* Estilos base do corpo, adaptados para a tela de login */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -29,13 +22,15 @@
             background-size: cover;
             background-position: center;
             background-repeat: repeat;
-            display: flex; /* Usado para posicionar sidebar e main-content */
+            display: flex;
+            justify-content: center; /* Centraliza horizontalmente */
+            align-items: center; /* Centraliza verticalmente */
             min-height: 100vh;
-            color: var(--sidebar-text-color);
-            overflow-x: hidden; /* Evita scroll horizontal */
+            color: white;
+            overflow: hidden; /* Remove scroll */
         }
 
-        /* Loading Screen (mantido do seu código original) */
+        /* Loading Screen (mantido) */
         .loading-screen {
             position: fixed;
             top: 0;
@@ -65,39 +60,25 @@
             to { transform: scale(1.05); }
         }
 
-        /* Container do formulário (adaptado para o novo layout) */
+        /* Container do formulário */
         .container {
-            flex-grow: 1; /* Ocupa o restante da largura */
-            padding-top: var(--header-height); /* Espaçamento para o header fixo */
-            padding: calc(var(--header-height) + 30px) 30px 30px 30px; /* Ajusta o padding total */
-            background-color: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(8px);
-            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.3);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            color: white;
-            min-height: calc(100vh - var(--header-height));
-            margin-left: var(--sidebar-width-collapsed); /* Começa após a sidebar recolhida */
-            transition: margin-left 0.3s ease-in-out;
-            
-            /* Adicionado para o formulário */
-            max-width: 600px; /* Limita a largura do formulário */
-            margin: 0 auto; /* Centraliza o formulário */
+            max-width: 450px; /* Limita a largura do formulário */
             padding: 40px;
             border-radius: 10px;
-            background-color: rgba(255, 255, 255, 0.95); /* Fundo claro para o formulário */
+            background-color: rgba(255, 255, 255, 0.98); /* Fundo quase opaco para o formulário */
             color: #333; /* Cor do texto dentro do formulário */
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.3);
             text-align: center;
+            opacity: 0; /* Esconde até o loading terminar */
+            transform: translateY(20px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
         }
 
-        /* Ajuste do container quando a sidebar expande */
-        .sidebar.expanded ~ .container { /* Alterado de .main-content para .container */
-            margin-left: var(--sidebar-width-expanded); /* Move o container quando a sidebar expande */
+        /* Mostra o container após o loading terminar */
+        body.loading-finished .container {
+            opacity: 1;
+            transform: translateY(0);
         }
-
 
         .container h2 {
             color: var(--primary-color);
@@ -109,7 +90,9 @@
             position: relative;
             margin-bottom: 25px;
             width: 100%;
-            max-width: 350px;
+            max-width: 350px; /* Consistente com o que você tinha */
+            margin-left: auto; /* Centraliza o input group */
+            margin-right: auto;
         }
 
         .input-group i {
@@ -121,8 +104,8 @@
         }
 
         .input-group input {
-            width: calc(100% - 60px); /* Ajusta a largura do input */
-            padding: 15px 15px 15px 50px; /* Mais padding à esquerda para o ícone */
+            width: calc(100% - 60px);
+            padding: 15px 15px 15px 50px;
             border: 1px solid #ccc;
             border-radius: 8px;
             font-size: 1em;
@@ -156,228 +139,15 @@
             transform: translateY(-2px);
         }
 
-        #message {
-            margin-top: 20px;
-            padding: 10px;
-            border-radius: 5px;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            width: var(--sidebar-width-collapsed); /* Começa recolhida */
-            background-color: var(--sidebar-bg-color);
-            padding: 20px 0; /* Padding vertical, horizontal 0 para controle via padding dos itens */
-            display: flex;
-            flex-direction: column;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
-            position: fixed; /* Fixa a sidebar */
-            height: 100%;
-            z-index: 1000;
-            transition: width 0.3s ease-in-out, left 0.3s ease-in-out; /* Transição para largura e posição */
-            overflow-y: auto; /* Para scroll se o conteúdo for grande */
-            align-items: flex-start; /* Alinha itens à esquerda */
-        }
-
-        .sidebar.expanded {
-            width: var(--sidebar-width-expanded); /* Expande ao clicar */
-        }
-
-        .sidebar .logo {
-            width: 100%; /* Ocupa a largura disponível na sidebar */
-            padding: 0 15px; /* Padding interno para a logo */
-            margin-bottom: 30px;
-            text-align: center; /* Centraliza a imagem */
-            display: none; /* Esconde por padrão */
-            opacity: 0;
-            transition: opacity 0.1s ease;
-        }
-        .sidebar.expanded .logo {
-            display: block; /* Mostra a logo quando expandida */
-            opacity: 1;
-        }
-        .sidebar .logo img {
-            width: 100%;
-            height: auto;
-            max-width: 150px; /* Limite máximo para a logo */
-        }
-
-        .sidebar h3 {
-            color: var(--primary-color);
-            margin-bottom: 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
-            padding-bottom: 10px;
-            width: 100%;
-            text-align: center;
-            display: none; /* Esconde por padrão */
-            opacity: 0;
-            transition: opacity 0.1s ease;
-        }
-        .sidebar.expanded h3 {
-            display: block; /* Mostra o título quando expandida */
-            opacity: 1;
-        }
-
-        .sidebar ul {
-            list-style: none;
-            padding: 0;
-            width: 100%;
-            flex-grow: 1; /* Ocupa o espaço disponível para a lista de navegação */
-        }
-
-        .sidebar ul li {
-            margin-bottom: 5px; /* Ajustado para um espaçamento menor */
-        }
-
-        .sidebar ul li a {
-            color: var(--sidebar-text-color);
-            text-decoration: none;
-            padding: 15px 20px; /* Mais padding para os links */
-            display: flex; /* Para alinhar ícone e texto */
-            align-items: center;
-            border-radius: 8px;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            white-space: nowrap; /* Impede quebra de linha do texto */
-            overflow: hidden; /* Esconde o texto que ultrapassa a largura */
-        }
-
-        .sidebar ul li a i {
-            margin-right: 15px; /* Mais espaço entre ícone e texto */
-            font-size: 1.2em;
-            width: 25px; /* Garante que o ícone tenha um espaço fixo */
-            text-align: center;
-        }
-        
-        .sidebar ul li a .link-text {
-            display: none; /* Esconde o texto por padrão */
-            opacity: 0;
-            transition: opacity 0.1s ease;
-        }
-
-        .sidebar.expanded ul li a .link-text {
-            display: inline; /* Mostra o texto quando expandido */
-            opacity: 1;
-        }
-
-        .sidebar ul li a:hover {
-            background-color: var(--sidebar-hover-bg);
-            transform: translateX(5px);
-        }
-
-        .sidebar ul li a.active {
-            background-color: var(--primary-color); /* Destaque para o item ativo */
-        }
-        
-        /* Header (Topo) */
-        .header {
-            height: var(--header-height);
-            background-color: rgba(255, 255, 255, 0.9); /* Fundo semi-transparente para o header */
-            border-bottom: 1px solid #e0e0e0;
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            position: fixed;
-            top: 0;
-            left: var(--sidebar-width-collapsed); /* Começa após a sidebar recolhida */
-            right: 0;
-            z-index: 999;
-            transition: left 0.3s ease-in-out;
-            color: #333; /* Cor do texto no header */
-        }
-
-        .sidebar.expanded ~ .header {
-            left: var(--sidebar-width-expanded); /* Move o header quando a sidebar expande */
-        }
-
-        .hamburger-menu {
-            font-size: 28px; /* Ícone um pouco maior */
-            cursor: pointer;
-            color: #333;
-            margin-right: 20px;
-        }
-
-        .header h1 {
-            margin: 0;
-            font-size: 24px;
-            flex-grow: 1; /* Ocupa o espaço restante */
-            color: #333;
-        }
-
-        /* User Dropdown Styles */
-        .user-dropdown {
-            position: relative;
-            margin-left: auto; /* Empurra para a direita */
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            padding: 8px 12px;
-            border-radius: 8px;
-            transition: background-color 0.2s ease;
-        }
-        .user-dropdown:hover {
-            background-color: rgba(0, 0, 0, 0.05);
-        }
-        .user-dropdown i {
-            margin-right: 8px;
-            color: var(--primary-color);
-        }
-        .user-dropdown-content {
-            display: none;
-            position: absolute;
-            background-color: #f9f9f9;
-            min-width: 160px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 1;
-            right: 0;
-            top: 100%; /* Abaixo do botão */
-            border-radius: 8px;
-            overflow: hidden; /* Garante que os cantos arredondados funcionem */
-        }
-        .user-dropdown-content a {
-            color: black;
-            padding: 12px 16px;
-            text-decoration: none;
-            display: block;
-            transition: background-color 0.2s ease;
-        }
-        .user-dropdown-content a:hover {
-            background-color: #f1f1f1;
-        }
-        .user-dropdown-content a i {
-            margin-right: 10px;
-            color: #555;
-        }
-        .user-dropdown.show .user-dropdown-content {
-            display: block;
-        }
-
-        /* Main Content Area (adaptação para o formulário) */
-        .main-content { /* Este estilo não será usado diretamente no seu HTML atual, pois 'container' o substitui */
-            margin-left: var(--sidebar-width-collapsed); /* Começa após a sidebar recolhida */
-            padding-top: var(--header-height); /* Espaçamento para o header fixo */
-            flex-grow: 1; /* Ocupa o restante da largura */
-            padding: calc(var(--header-height) + 30px) 30px 30px 30px; /* Ajusta o padding total */
-            background-color: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(8px);
-            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.3);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            transition: margin-left 0.3s ease-in-out;
-            color: white; /* Cor do texto no conteúdo principal */
-            min-height: calc(100vh - var(--header-height)); /* Garante que o conteúdo principal ocupe o restante da altura */
-        }
-
-        .sidebar.expanded ~ .main-content {
-            margin-left: var(--sidebar-width-expanded); /* Move o conteúdo quando a sidebar expande */
-        }
-
-        /* Flash Messages */
+        /* Flash Messages (centralizadas para a tela de login) */
         .flash-messages-container {
-            width: 100%;
-            max-width: 600px;
-            margin-bottom: 20px;
+            position: absolute; /* Posição fixa para as mensagens */
+            top: 20px; /* Distância do topo */
+            left: 50%;
+            transform: translateX(-50%); /* Centraliza horizontalmente */
+            width: 90%;
+            max-width: 500px; /* Limita a largura */
+            z-index: 1000;
         }
         .flash-message, .flash-error {
             padding: 10px 15px;
@@ -387,6 +157,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         .flash-message {
             background-color: rgba(40, 167, 69, 0.1);
@@ -401,89 +172,17 @@
         .flash-message i, .flash-error i {
             font-size: 1.2em;
         }
-        
-        /* Media Queries para Responsividade */
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 0; /* Começa totalmente escondida em mobile */
-                left: -var(--sidebar-width-expanded); /* Fora da tela */
-            }
-            .sidebar.expanded {
-                width: var(--sidebar-width-expanded);
-                left: 0; /* Desliza para dentro */
-            }
-            .header {
-                left: 0; /* Header sempre começa em 0 em mobile */
-                width: 100%;
-            }
-            .sidebar.expanded ~ .header {
-                left: var(--sidebar-width-expanded); /* Empurra o header ao expandir */
-                width: calc(100% - var(--sidebar-width-expanded));
-            }
-            .container { /* Alterado de .main-content para .container */
-                margin-left: 0; /* Conteúdo sempre começa em 0 em mobile */
-                width: 100%;
-                padding: calc(var(--header-height) + 20px) 20px 20px 20px; /* Ajusta padding */
-            }
-            .sidebar.expanded ~ .container { /* Alterado de .main-content para .container */
-                margin-left: var(--sidebar-width-expanded); /* Empurra o conteúdo ao expandir */
-                width: calc(100% - var(--sidebar-width-expanded));
-            }
-            
-            /* Overlay quando sidebar expandida em mobile */
-            body.sidebar-open::after {
-                content: '';
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0, 0, 0, 0.5);
-                z-index: 990; /* Abaixo da sidebar, acima do conteúdo */
-            }
-
-            .container h2 {
-                font-size: 2em;
-            }
-            .container p {
-                font-size: 1em;
-            }
-        }
     </style>
 </head>
 <body>
 
     <div class="loading-screen">
         <img src="https://i.postimg.cc/26VcMNnf/Bubble-SA-PNG.png" alt="Logo Bubble SA" class="umbrella-img" />
-        <p>Conectando ao Render...</p>
+        <p>Carregando...</p>
     </div>
 
-    <aside class="sidebar" id="sidebar">
-        <div class="logo">
-            <img src="https://i.postimg.cc/26VcMNnf/Bubble-SA-PNG.png" alt="Logo Bubble SA">
-        </div>
-        <h3>Menu</h3>
-        <ul>
-            <li><a href="#" class="active"><i class="fas fa-home"></i> <span class="link-text">Dashboard</span></a></li>
-            <li><a href="#"><i class="fas fa-bell"></i> <span class="link-text">Notificações</span></a></li>
-            <li><a href="#"><i class="fas fa-cog"></i> <span class="link-text">Configurações</span></a></li>
-            <li><a href="#"><i class="fas fa-question-circle"></i> <span class="link-text">Ajuda</span></a></li>
-        </ul>
-    </aside>
-
-    <div class="header">
-        <i class="fas fa-bars hamburger-menu" id="hamburgerMenu"></i>
-        <h1>Dashboard</h1> 
-        
-        <div class="user-dropdown" id="userDropdown">
-            <i class="fas fa-user-circle"></i>Bem-vindo, {{ user_name }}!
-            <div class="user-dropdown-content">
-                <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Sair</a>
-            </div>
-        </div>
-    </div>
-
-    <main class="container" id="mainContent"> 
+    <div class="container">
+        {# Flash Messages #}
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="flash-messages-container">
@@ -501,7 +200,6 @@
             {% endif %}
         {% endwith %}
 
-        {# Conteúdo do formulário de cadastro #}
         <h2>Bem-vindo ao Sistema de Consultas</h2>
         <p style="color: #666; margin-bottom: 30px; font-size: 0.95em;">Preencha seus dados para acessar o sistema:</p>
         <form id="cadastroTecnicoForm" action="/cadastro_tecnico" method="POST">
@@ -520,79 +218,21 @@
 
             <button type="submit">Entrar</button>
         </form>
-        <div id="message" style="margin-top: 20px; text-align: center; font-weight: bold;"></div>
-    </main>
+    </div>
 
     <script>
-        const sidebar = document.getElementById('sidebar');
-        const hamburgerMenu = document.getElementById('hamburgerMenu');
-        const userDropdown = document.getElementById('userDropdown');
-        
-        function toggleSidebar() {
-            sidebar.classList.toggle('expanded');
-            document.body.classList.toggle('sidebar-open', sidebar.classList.contains('expanded') && window.innerWidth <= 768);
-            document.body.style.overflow = sidebar.classList.contains('expanded') && window.innerWidth <= 768 ? 'hidden' : '';
-        }
-
-        function toggleUserDropdown() {
-            userDropdown.classList.toggle('show');
-        }
-
-        hamburgerMenu.addEventListener('click', toggleSidebar);
-        userDropdown.addEventListener('click', toggleUserDropdown);
-
-        // Close dropdown if clicked outside
-        document.addEventListener('click', function(event) {
-            if (!userDropdown.contains(event.target)) {
-                userDropdown.classList.remove('show');
-            }
-            // Logic for sidebar closing on outside click (already there)
-            if (window.innerWidth <= 768 && sidebar.classList.contains('expanded')) {
-                const isClickInsideSidebar = sidebar.contains(event.target);
-                const isClickOnHamburger = hamburgerMenu.contains(event.target);
-
-                if (!isClickInsideSidebar && !isClickOnHamburger) {
-                    toggleSidebar();
-                }
-            }
-        });
-
-        // Initialize sidebar state on load and resize
-        window.addEventListener('resize', function() {
-            if (window.innerWidth > 768) {
-                sidebar.classList.add('expanded'); // Always expanded on desktop
-                document.body.classList.remove('sidebar-open');
-                document.body.style.overflow = '';
-            } else {
-                sidebar.classList.remove('expanded'); // Always collapsed on mobile
-                document.body.classList.remove('sidebar-open');
-                document.body.style.overflow = '';
-            }
-            // Close dropdown on resize if it was open
-            userDropdown.classList.remove('show');
-        });
-
-        // Inicializa o Loading Screen e outras funções JavaScript
         document.addEventListener('DOMContentLoaded', function() {
             // Remove o screen de carregamento.
             setTimeout(() => {
                 document.querySelector(".loading-screen").style.opacity = 0;
                 setTimeout(() => {
                     document.querySelector(".loading-screen").style.display = "none";
-                    document.body.classList.add('loading-finished'); // Adiciona a classe para mostrar o container
+                    document.body.classList.add('loading-finished'); // Adiciona a classe para mostrar o formulário
                 }, 1000);
             }, 3000);
 
-            // Inicializa o estado da sidebar
-            if (window.innerWidth > 768) {
-                sidebar.classList.add('expanded'); // Start expanded on desktop
-            } else {
-                sidebar.classList.remove('expanded'); // Start collapsed on mobile
-            }
-
             // Lógica de envio do formulário de cadastro de técnico
             const cadastroTecnicoForm = document.getElementById('cadastroTecnicoForm');
-            const messageDiv = document.getElementById('message');
 
             cadastroTecnicoForm.addEventListener('submit', function(event) {
                 event.preventDefault(); // Impede o envio padrão do formulário
@@ -603,34 +243,23 @@
                 fetch('/cadastro_tecnico', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded', // FormData padrão
+                        'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    body: new URLSearchParams(data).toString(), // Envia como x-www-form-urlencoded
+                    body: new URLSearchParams(data).toString(),
                 })
                 .then(response => response.json())
                 .then(result => {
-                    // Flash messages já são exibidas pelo Jinja2 no topo, mas podemos manter uma lógica aqui se quiser uma mensagem extra
-                    if (result.success) {
-                        messageDiv.style.color = '#28a745'; // Verde para sucesso
-                        messageDiv.textContent = result.message;
-                        // Opcional: Redirecionar após o login se necessário (ex: para uma dashboard real)
-                        // window.location.href = '/dashboard'; 
+                    if (result.success && result.redirect) {
+                        window.location.href = result.redirect; // Redireciona para a nova tela
                     } else {
-                        messageDiv.style.color = '#dc3545'; // Vermelho para erro
-                        messageDiv.textContent = result.message;
+                        // As flash messages serão exibidas automaticamente pelo Jinja2
+                        // Aqui você pode adicionar um console.error ou outra lógica se precisar de mais feedback
+                        console.error("Erro no login:", result.message);
                     }
-                    // Limpar a mensagem após alguns segundos, se desejado
-                    setTimeout(() => {
-                        messageDiv.textContent = '';
-                    }, 5000);
                 })
                 .catch(error => {
-                    console.error('Erro:', error);
-                    messageDiv.style.color = '#dc3545';
-                    messageDiv.textContent = 'Ocorreu um erro ao tentar cadastrar/logar. Tente novamente.';
-                    setTimeout(() => {
-                        messageDiv.textContent = '';
-                    }, 5000);
+                    console.error('Erro na requisição ou no servidor:', error);
+                    // O Flask deve gerar uma flash message de erro se a rota retornar um erro HTTP
                 });
             });
         });
