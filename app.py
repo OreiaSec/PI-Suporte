@@ -32,8 +32,10 @@ def get_db_connection():
 
 def init_db():
     """Cria a tabela 'tecnicos' se ela não existir."""
+    print("DEBUG: init_db() sendo chamada...") # Adicionado
     conn = get_db_connection()
     if conn:
+        print("DEBUG: Conexão com o banco de dados estabelecida em init_db().") # Adicionado
         cursor = conn.cursor()
         try:
             # Tabela para registrar técnicos
@@ -45,15 +47,20 @@ def init_db():
                     senha_hash VARCHAR(255) NOT NULL
                 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
             """)
+            conn.commit() # Adicionado para garantir a persistência da DDL
+            print("DEBUG: Comando CREATE TABLE IF NOT EXISTS tecnicos executado.") # Adicionado
             print("Tabela 'tecnicos' verificada/criada com sucesso.")
 
         except mysql.connector.Error as err:
-            print(f"Erro ao criar tabela 'tecnicos': {err}")
+            print(f"ERRO CRÍTICO DB: Erro ao criar tabela 'tecnicos': {err}") # Mensagem de erro aprimorada
         finally:
-            cursor.close()
-            conn.close()
+            if cursor: # Garante que cursor só é fechado se foi criado
+                cursor.close()
+            if conn: # Garante que conn só é fechado se foi criado
+                conn.close()
+            print("DEBUG: Conexão do banco de dados fechada em init_db().") # Adicionado
     else:
-        print("Não foi possível inicializar o banco de dados: conexão falhou.")
+        print("ERRO CRÍTICO DB: Não foi possível inicializar o banco de dados: conexão falhou.") # Mensagem de erro aprimorada
 
 # --- Rotas do Aplicativo ---
 
@@ -95,8 +102,10 @@ def register_tecnico():
                 flash(f"Erro ao cadastrar técnico: {err}", "error")
                 return jsonify({"success": False, "message": f"Erro no servidor: {err}"}), 500
         finally:
-            cursor.close()
-            conn.close()
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
     else:
         flash("Erro de conexão com o banco de dados.", "error")
         return jsonify({"success": False, "message": "Erro de conexão com o banco de dados."}), 500
@@ -129,8 +138,10 @@ def login():
             flash(f"Erro no servidor ao tentar login: {err}", "error")
             return jsonify({"success": False, "message": f"Erro no servidor: {err}"}), 500
         finally:
-            cursor.close()
-            conn.close()
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
     else:
         flash("Erro de conexão com o banco de dados.", "error")
         return jsonify({"success": False, "message": "Erro de conexão com o banco de dados."}), 500
