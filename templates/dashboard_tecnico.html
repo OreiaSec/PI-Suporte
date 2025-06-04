@@ -1,1 +1,516 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Bubble Support - Dashboard Técnico</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Variáveis CSS */
+        :root {
+            --sidebar-width-expanded: 250px;
+            --sidebar-width-collapsed: 80px;
+            --header-height: 70px;
+            --main-bg-image: url('https://static8.depositphotos.com/1020804/816/i/450/depositphotos_8166031-stock-photo-abstract-background-night-sky-after.jpg');
+            --sidebar-bg-color: rgba(11, 12, 42, 0.9);
+            --sidebar-text-color: white;
+            --sidebar-hover-bg: rgba(0, 123, 255, 0.3);
+            --primary-color: #007BFF;
+            --danger-color: #dc3545;
+        }
 
+        /* Estilos base do corpo */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: var(--main-bg-image);
+            background-size: cover;
+            background-position: center;
+            background-repeat: repeat;
+            display: flex;
+            min-height: 100vh;
+            color: var(--sidebar-text-color);
+            overflow-x: hidden;
+        }
+
+        /* Loading Screen (mantido) */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 1s ease-out;
+            color: white;
+            font-size: 1.2em;
+        }
+
+        .loading-screen .umbrella-img {
+            width: 150px;
+            height: auto;
+            margin-bottom: 20px;
+            animation: pulse 1.5s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
+        }
+
+        /* Container do conteúdo principal */
+        .main-content {
+            flex-grow: 1;
+            padding-top: var(--header-height);
+            padding: calc(var(--header-height) + 30px) 30px 30px 30px;
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            color: white;
+            min-height: calc(100vh - var(--header-height));
+            margin-left: var(--sidebar-width-collapsed);
+            transition: margin-left 0.3s ease-in-out;
+        }
+
+        /* Ajuste do main-content quando a sidebar expande */
+        .sidebar.expanded ~ .main-content {
+            margin-left: var(--sidebar-width-expanded);
+        }
+
+        .main-content h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+        .main-content p {
+            font-size: 1.2em;
+            max-width: 800px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width-collapsed);
+            background-color: var(--sidebar-bg-color);
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+            position: fixed;
+            height: 100%;
+            z-index: 1000;
+            transition: width 0.3s ease-in-out, left 0.3s ease-in-out;
+            overflow-y: auto;
+            align-items: flex-start;
+        }
+
+        .sidebar.expanded {
+            width: var(--sidebar-width-expanded);
+        }
+
+        .sidebar .logo {
+            width: 100%;
+            padding: 0 15px;
+            margin-bottom: 30px;
+            text-align: center;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.1s ease;
+        }
+        .sidebar.expanded .logo {
+            display: block;
+            opacity: 1;
+        }
+        .sidebar .logo img {
+            width: 100%;
+            height: auto;
+            max-width: 150px;
+        }
+
+        .sidebar h3 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            padding-bottom: 10px;
+            width: 100%;
+            text-align: center;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.1s ease;
+        }
+        .sidebar.expanded h3 {
+            display: block;
+            opacity: 1;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            width: 100%;
+            flex-grow: 1;
+        }
+
+        .sidebar ul li {
+            margin-bottom: 5px;
+        }
+
+        .sidebar ul li a {
+            color: var(--sidebar-text-color);
+            text-decoration: none;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            border-radius: 8px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .sidebar ul li a i {
+            margin-right: 15px;
+            font-size: 1.2em;
+            width: 25px;
+            text-align: center;
+        }
+        
+        .sidebar ul li a .link-text {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.1s ease;
+        }
+
+        .sidebar.expanded ul li a .link-text {
+            display: inline;
+            opacity: 1;
+        }
+
+        .sidebar ul li a:hover {
+            background-color: var(--sidebar-hover-bg);
+            transform: translateX(5px);
+        }
+
+        .sidebar ul li a.active {
+            background-color: var(--primary-color);
+        }
+        
+        /* Header (Topo) */
+        .header {
+            height: var(--header-height);
+            background-color: rgba(255, 255, 255, 0.9);
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width-collapsed);
+            right: 0;
+            z-index: 999;
+            transition: left 0.3s ease-in-out;
+            color: #333;
+        }
+
+        .sidebar.expanded ~ .header {
+            left: var(--sidebar-width-expanded);
+        }
+
+        .hamburger-menu {
+            font-size: 28px;
+            cursor: pointer;
+            color: #333;
+            margin-right: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            flex-grow: 1;
+            color: #333;
+        }
+
+        /* User Dropdown Styles */
+        .user-dropdown {
+            position: relative;
+            margin-left: auto;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: background-color 0.2s ease;
+        }
+        .user-dropdown:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        .user-dropdown i {
+            margin-right: 8px;
+            color: var(--primary-color);
+        }
+        .user-dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            right: 0;
+            top: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .user-dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            transition: background-color 0.2s ease;
+        }
+        .user-dropdown-content a:hover {
+            background-color: #f1f1f1;
+        }
+        .user-dropdown-content a i {
+            margin-right: 10px;
+            color: #555;
+        }
+        .user-dropdown.show .user-dropdown-content {
+            display: block;
+        }
+
+        /* Flash Messages */
+        .flash-messages-container {
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 20px;
+        }
+        .flash-message, .flash-error {
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .flash-message {
+            background-color: rgba(40, 167, 69, 0.1);
+            border: 1px solid #28a745;
+            color: #28a745;
+        }
+        .flash-error {
+            background-color: rgba(220, 53, 69, 0.1);
+            border: 1px solid #dc3545;
+            color: #dc3545;
+        }
+        .flash-message i, .flash-error i {
+            font-size: 1.2em;
+        }
+        
+        /* Media Queries para Responsividade */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 0;
+                left: -var(--sidebar-width-expanded);
+            }
+            .sidebar.expanded {
+                width: var(--sidebar-width-expanded);
+                left: 0;
+            }
+            .header {
+                left: 0;
+                width: 100%;
+            }
+            .sidebar.expanded ~ .header {
+                left: var(--sidebar-width-expanded);
+                width: calc(100% - var(--sidebar-width-expanded));
+            }
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: calc(var(--header-height) + 20px) 20px 20px 20px;
+            }
+            .sidebar.expanded ~ .main-content {
+                margin-left: var(--sidebar-width-expanded);
+                width: calc(100% - var(--sidebar-width-expanded));
+            }
+            
+            /* Overlay quando sidebar expandida em mobile */
+            body.sidebar-open::after {
+                content: '';
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 990;
+            }
+
+            .main-content h2 {
+                font-size: 2em;
+            }
+            .main-content p {
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="loading-screen">
+        <img src="https://i.postimg.cc/26VcMNnf/Bubble-SA-PNG.png" alt="Logo Bubble SA" class="umbrella-img" />
+        <p>Carregando Dashboard...</p>
+    </div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <img src="https://i.postimg.cc/26VcMNnf/Bubble-SA-PNG.png" alt="Logo Bubble SA">
+        </div>
+        <h3>Menu</h3>
+        <ul>
+            <li><a href="#" class="active"><i class="fas fa-home"></i> <span class="link-text">Dashboard</span></a></li>
+            <li><a href="#"><i class="fas fa-bell"></i> <span class="link-text">Notificações</span></a></li>
+            <li><a href="#"><i class="fas fa-cog"></i> <span class="link-text">Configurações</span></a></li>
+            <li><a href="#"><i class="fas fa-question-circle"></i> <span class="link-text">Ajuda</span></a></li>
+            {# Adicione mais itens de menu aqui, se necessário #}
+        </ul>
+    </aside>
+
+    <div class="header">
+        <i class="fas fa-bars hamburger-menu" id="hamburgerMenu"></i>
+        <h1>Dashboard do Técnico</h1> 
+        
+        <div class="user-dropdown" id="userDropdown">
+            <i class="fas fa-user-circle"></i>Bem-vindo, {{ user_name }}!
+            <div class="user-dropdown-content">
+                <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Sair</a>
+            </div>
+        </div>
+    </div>
+
+    <main class="main-content" id="mainContent"> 
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages-container">
+                    {% for category, message in messages %}
+                        <div class="flash-{{ category }}">
+                            {% if category == 'message' %}
+                                <i class="fas fa-check-circle"></i>
+                            {% else %}
+                                <i class="fas fa-exclamation-triangle"></i>
+                            {% endif %}
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {# Conteúdo Específico do Dashboard do Técnico #}
+        <h2>Visão Geral do Sistema</h2>
+        <p>Aqui você pode ver um resumo das atividades, chamados abertos, status de equipamentos e outras informações relevantes para o seu trabalho como técnico.</p>
+        <p>Use o menu lateral para navegar entre as diferentes seções do sistema.</p>
+
+        {# Você pode adicionar cards, gráficos, tabelas aqui #}
+        <div style="margin-top: 40px; display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
+            <div style="background-color: rgba(255, 255, 255, 0.15); padding: 25px; border-radius: 10px; flex: 1; min-width: 250px; max-width: 300px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                <i class="fas fa-ticket-alt fa-3x" style="color: var(--primary-color); margin-bottom: 15px;"></i>
+                <h3>Chamados Abertos</h3>
+                <p style="font-size: 2em; font-weight: bold; color: white;">12</p>
+            </div>
+            <div style="background-color: rgba(255, 255, 255, 0.15); padding: 25px; border-radius: 10px; flex: 1; min-width: 250px; max-width: 300px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                <i class="fas fa-tools fa-3x" style="color: var(--primary-color); margin-bottom: 15px;"></i>
+                <h3>Manutenções Pendentes</h3>
+                <p style="font-size: 2em; font-weight: bold; color: white;">5</p>
+            </div>
+            <div style="background-color: rgba(255, 255, 255, 0.15); padding: 25px; border-radius: 10px; flex: 1; min-width: 250px; max-width: 300px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                <i class="fas fa-calendar-check fa-3x" style="color: var(--primary-color); margin-bottom: 15px;"></i>
+                <h3>Tarefas Concluídas (Hoje)</h3>
+                <p style="font-size: 2em; font-weight: bold; color: white;">3</p>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const hamburgerMenu = document.getElementById('hamburgerMenu');
+        const userDropdown = document.getElementById('userDropdown');
+        
+        function toggleSidebar() {
+            sidebar.classList.toggle('expanded');
+            document.body.classList.toggle('sidebar-open', sidebar.classList.contains('expanded') && window.innerWidth <= 768);
+            document.body.style.overflow = sidebar.classList.contains('expanded') && window.innerWidth <= 768 ? 'hidden' : '';
+        }
+
+        function toggleUserDropdown() {
+            userDropdown.classList.toggle('show');
+        }
+
+        hamburgerMenu.addEventListener('click', toggleSidebar);
+        userDropdown.addEventListener('click', toggleUserDropdown);
+
+        // Close dropdown if clicked outside
+        document.addEventListener('click', function(event) {
+            if (!userDropdown.contains(event.target)) {
+                userDropdown.classList.remove('show');
+            }
+            // Logic for sidebar closing on outside click (already there)
+            if (window.innerWidth <= 768 && sidebar.classList.contains('expanded')) {
+                const isClickInsideSidebar = sidebar.contains(event.target);
+                const isClickOnHamburger = hamburgerMenu.contains(event.target);
+
+                if (!isClickInsideSidebar && !isClickOnHamburger) {
+                    toggleSidebar();
+                }
+            }
+        });
+
+        // Initialize sidebar state on load and resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                sidebar.classList.add('expanded'); // Always expanded on desktop
+                document.body.classList.remove('sidebar-open');
+                document.body.style.overflow = '';
+            } else {
+                sidebar.classList.remove('expanded'); // Always collapsed on mobile
+                document.body.classList.remove('sidebar-open');
+                document.body.style.overflow = '';
+            }
+            // Close dropdown on resize if it was open
+            userDropdown.classList.remove('show');
+        });
+
+        // Inicializa o Loading Screen e outras funções JavaScript
+        document.addEventListener('DOMContentLoaded', function() {
+            // Remove o screen de carregamento.
+            setTimeout(() => {
+                document.querySelector(".loading-screen").style.opacity = 0;
+                setTimeout(() => {
+                    document.querySelector(".loading-screen").style.display = "none";
+                    document.body.classList.add('loading-finished');
+                }, 1000);
+            }, 3000);
+
+            // Inicializa o estado da sidebar
+            if (window.innerWidth > 768) {
+                sidebar.classList.add('expanded');
+            } else {
+                sidebar.classList.remove('expanded');
+            }
+        });
+    </script>
+</body>
+</html>
