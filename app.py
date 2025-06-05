@@ -1,10 +1,10 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash
 import os
-import mysql.connector # Importa o conector MySQL
+import mysql.connector # Importa a biblioteca do MySQL
 from werkzeug.security import generate_password_hash, check_password_hash # Para hashing de senhas
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'sua_super_chave_secreta_e_complexa_aqui_12345') # Use uma chave mais robusta em produção!
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'sua_super_chave_secreta_e_complexa_aqui_12345')
 
 # Configuração do Banco de Dados
 DB_CONFIG = {
@@ -20,193 +20,92 @@ DB_CONFIG = {
     'raise_on_warnings': True
 }
 
-# --- Funções de Conexão e Inicialização do Banco de Dados ---
 def get_db_connection():
-    """Estabelece uma conexão com o banco de dados."""
+    """Cria e retorna uma nova conexão com o banco de dados."""
     try:
         conn = mysql.connector.connect(**DB_CONFIG)
         return conn
     except mysql.connector.Error as err:
         print(f"Erro ao conectar ao banco de dados: {err}")
+        # Em um ambiente de produção, você pode querer logar isso e não retornar a falha diretamente ao usuário
+        flash("Erro interno no servidor ao conectar ao banco de dados.", "error")
         return None
 
-def init_db():
-    """Cria as tabelas 'tecnicos' e 'historico_login' se elas não existirem."""
-    print("DEBUG: init_db() sendo chamada...")
-    conn = get_db_connection()
-    if conn:
-        print("DEBUG: Conexão com o banco de dados estabelecida em init_db().")
-        cursor = conn.cursor()
-        try:
-            # Tabela para registrar técnicos
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS tecnicos (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    nome VARCHAR(255) NOT NULL,
-                    email VARCHAR(255) NOT NULL UNIQUE,
-                    senha_hash VARCHAR(255) NOT NULL
-                ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-            """)
-            conn.commit() # Confirma a transação DDL
-            print("DEBUG: Comando CREATE TABLE IF NOT EXISTS tecnicos executado.")
-            print("Tabela 'tecnicos' verificada/criada com sucesso.")
+@app.route('/') [cite: 1]
+def index(): [cite: 1]
+    # Se o usuário já estiver logado (ou seja, 'user_name' na sessão),
+    # redireciona diretamente para o dashboard, evitando que ele veja a tela de login novamente.
+    if 'user_name' in session: [cite: 2]
+        return redirect(url_for('dashboard_tecnico')) [cite: 2]
+    
+    # Renderiza a tela de login/cadastro se não estiver logado
+    return render_template('index.html') [cite: 205]
 
-            # Tabela para histórico de logins (opcional, se você quiser registrar acessos)
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS historico_login (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    tecnico_id INT NOT NULL,
-                    data_hora_login DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    endereco_ip VARCHAR(45), -- Para IPv4 ou IPv6
-                    status_login VARCHAR(10) DEFAULT 'SUCESSO', -- 'SUCESSO' ou 'FALHA'
-                    FOREIGN KEY (tecnico_id) REFERENCES tecnicos(id) ON DELETE CASCADE
-                ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-            """)
-            conn.commit()
-            print("DEBUG: Comando CREATE TABLE IF NOT EXISTS historico_login executado.")
-            print("Tabela 'historico_login' verificada/criada com sucesso.")
-
-        except mysql.connector.Error as err:
-            print(f"ERRO CRÍTICO DB: Erro ao criar tabelas: {err}")
-        finally:
-            if cursor:
-                cursor.close()
-            if conn:
-                conn.close()
-            print("DEBUG: Conexão do banco de dados fechada em init_db().")
-    else:
-        print("ERRO CRÍTICO DB: Não foi possível inicializar o banco de dados: conexão falhou.")
-
-# --- Rotas do Aplicativo ---
-
-@app.route('/')
-def index():
-    if 'user_name' in session:
-        return redirect(url_for('dashboard_tecnico'))
-    return render_template('index.html')
-
-@app.route('/register_tecnico', methods=['POST']) # Rota para REGISTRO de técnico
-def register_tecnico():
+@app.route('/cadastro_tecnico', methods=['POST']) [cite: 2]
+def cadastro_tecnico(): [cite: 2]
     nome_tecnico = request.form.get('nomeTecnico')
     email_corporativo = request.form.get('emailCorporativo')
     senha = request.form.get('senha')
 
-    if not nome_tecnico or not email_corporativo or not senha:
-        flash("Por favor, preencha todos os campos para cadastro!", "error")
-        return jsonify({"success": False, "message": "Por favor, preencha todos os campos!"}), 400
+    if not nome_tecnico or not email_corporativo or not senha: [cite: 2]
+        flash("Por favor, preencha todos os campos!", "error") [cite: 2]
+        return jsonify({"success": False, "message": "Por favor, preencha todos os campos!"}), 400 [cite: 2]
 
     conn = get_db_connection()
-    if conn:
-        cursor = conn.cursor()
-        try:
-            hashed_password = generate_password_hash(senha) # Hash da senha para segurança
+    if conn is None:
+        return jsonify({"success": False, "message": "Não foi possível conectar ao banco de dados."}), 500
 
-            cursor.execute("INSERT INTO tecnicos (nome, email, senha_hash) VALUES (%s, %s, %s)",
-                           (nome_tecnico, email_corporativo, hashed_password))
-            conn.commit() # Confirma a transação
+    cursor = conn.cursor(buffered=True) # buffered=True é útil para evitar "Unread result found"
+    
+    try:
+        # 1. Verificar se o e-mail já existe
+        cursor.execute("SELECT id_tecnico FROM tecnicos WHERE email_corporativo = %s", (email_corporativo,))
+        if cursor.fetchone():
+            flash("Este e-mail já está cadastrado. Por favor, use outro ou faça login.", "error")
+            return jsonify({"success": False, "message": "Este e-mail já está cadastrado."}), 409 # Conflict
 
-            flash("Técnico cadastrado com sucesso! Agora você pode fazer login.", "message")
-            return jsonify({"success": True, "message": "Técnico cadastrado com sucesso!"}), 200
-        except mysql.connector.Error as err:
-            if err.errno == 1062: # Erro de entrada duplicada (email UNIQUE)
-                flash("E-mail já cadastrado. Tente fazer login ou use outro e-mail.", "error")
-                return jsonify({"success": False, "message": "E-mail já cadastrado."}), 409 # Conflict
-            else:
-                flash(f"Erro ao cadastrar técnico: {err}", "error")
-                return jsonify({"success": False, "message": f"Erro no servidor: {err}"}), 500
-        finally:
-            if cursor:
-                cursor.close()
-            if conn:
-                conn.close()
-    else:
-        flash("Erro de conexão com o banco de dados.", "error")
-        return jsonify({"success": False, "message": "Erro de conexão com o banco de dados."}), 500
+        # 2. Hash da senha antes de armazenar
+        hashed_senha = generate_password_hash(senha)
 
-@app.route('/login', methods=['POST']) # Rota para LOGIN
-def login():
-    email = request.form.get('emailCorporativo')
-    senha = request.form.get('senha')
+        # 3. Inserir novo técnico
+        insert_query = "INSERT INTO tecnicos (nome_tecnico, email_corporativo, senha_hash) VALUES (%s, %s, %s)"
+        cursor.execute(insert_query, (nome_tecnico, email_corporativo, hashed_senha))
+        conn.commit() # Garante que a transação seja efetivada
 
-    if not email or not senha:
-        flash("Por favor, preencha e-mail e senha para login.", "error")
-        return jsonify({"success": False, "message": "Por favor, preencha e-mail e senha."}), 400
+        # Lógica de login após cadastro bem-sucedido
+        session['user_id'] = cursor.lastrowid # Pega o ID gerado para o novo técnico
+        session['user_name'] = nome_tecnico
+        
+        flash("Cadastro e Login realizados com sucesso!", "message")
+        return jsonify({"success": True, "redirect": url_for('dashboard_tecnico')})
 
-    conn = get_db_connection()
-    if conn:
-        cursor = conn.cursor(dictionary=True) # Retorna resultados como dicionários
-        try:
-            cursor.execute("SELECT id, nome, senha_hash FROM tecnicos WHERE email = %s", (email,))
-            tecnico = cursor.fetchone()
+    except mysql.connector.Error as err:
+        flash(f"Erro ao processar o cadastro: {err}", "error")
+        conn.rollback() # Desfaz a transação em caso de erro
+        return jsonify({"success": False, "message": f"Erro interno ao cadastrar o técnico: {err}"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
-            if tecnico and check_password_hash(tecnico['senha_hash'], senha):
-                session['user_id'] = tecnico['id']
-                session['user_name'] = tecnico['nome']
-                flash(f"Bem-vindo, {tecnico['nome']}!", "message")
-
-                # Opcional: Registrar login bem-sucedido no histórico
-                try:
-                    ip_address = request.remote_addr
-                    cursor_log = conn.cursor()
-                    cursor_log.execute(
-                        "INSERT INTO historico_login (tecnico_id, endereco_ip, status_login) VALUES (%s, %s, %s)",
-                        (tecnico['id'], ip_address, 'SUCESSO')
-                    )
-                    conn.commit()
-                    cursor_log.close()
-                except mysql.connector.Error as log_err:
-                    print(f"Erro ao registrar histórico de login bem-sucedido: {log_err}")
-                
-                return jsonify({"success": True, "redirect": url_for('dashboard_tecnico')})
-            else:
-                # Opcional: Registrar login falho no histórico
-                try:
-                    ip_address = request.remote_addr
-                    # Tenta obter o ID do técnico mesmo em caso de falha (se o email for válido, mas a senha não)
-                    tecnico_id_for_log = tecnico['id'] if tecnico else None
-                    cursor_log_fail = conn.cursor()
-                    cursor_log_fail.execute(
-                        "INSERT INTO historico_login (tecnico_id, endereco_ip, status_login) VALUES (%s, %s, %s)",
-                        (tecnico_id_for_log, ip_address, 'FALHA')
-                    )
-                    conn.commit()
-                    cursor_log_fail.close()
-                except mysql.connector.Error as log_err:
-                    print(f"Erro ao registrar histórico de login falho: {log_err}")
-
-                flash("E-mail ou senha incorretos.", "error")
-                return jsonify({"success": False, "message": "E-mail ou senha incorretos."}), 401 # Unauthorized
-        except mysql.connector.Error as err:
-            flash(f"Erro no servidor ao tentar login: {err}", "error")
-            return jsonify({"success": False, "message": f"Erro no servidor: {err}"}), 500
-        finally:
-            if cursor:
-                cursor.close()
-            if conn:
-                conn.close()
-    else:
-        flash("Erro de conexão com o banco de dados.", "error")
-        return jsonify({"success": False, "message": "Erro de conexão com o banco de dados."}), 500
-
-@app.route('/logout')
-def logout():
-    session.pop('user_id', None)
-    session.pop('user_name', None)
-    flash('Você foi desconectado.', 'message')
-    return redirect(url_for('index')) # Redireciona para a página de login
+@app.route('/logout') [cite: 4]
+def logout(): [cite: 4]
+    session.pop('user_id', None) [cite: 5]
+    session.pop('user_name', None) [cite: 5]
+    flash('Você foi desconectado.', 'message') [cite: 5]
+    return redirect(url_for('index')) [cite: 5]
 
 # --- NOVA ROTA ADICIONADA: Dashboard do Técnico ---
-@app.route('/dashboard_tecnico')
-def dashboard_tecnico():
+@app.route('/dashboard_tecnico') [cite: 4]
+def dashboard_tecnico(): [cite: 4]
     # Verifica se o usuário está logado antes de exibir o dashboard
-    if 'user_name' not in session:
-        flash("Você precisa estar logado para acessar esta página.", "error")
-        return redirect(url_for('index')) # Redireciona para o login se não estiver logado
+    if 'user_name' not in session: [cite: 4]
+        flash("Você precisa estar logado para acessar esta página.", "error") [cite: 5]
+        return redirect(url_for('index')) [cite: 5]
     
-    user_name = session.get('user_name', 'Usuário') # Pega o nome do usuário da sessão
-    return render_template('dashboard_tecnico.html', user_name=user_name)
+    user_name = session.get('user_name', 'Usuário') [cite: 5]
+    return render_template('dashboard_tecnico.html', user_name=user_name) [cite: 5]
 
-if __name__ == '__main__':
-    # Inicializa o banco de dados e as tabelas 'tecnicos' e 'historico_login' antes de rodar o app
-    init_db()
-    app.run(debug=True) # Em produção, defina debug=False e use um servidor WSGI como Gunicorn
+if __name__ == '__main__': [cite: 5]
+    app.run(debug=True) [cite: 5]
