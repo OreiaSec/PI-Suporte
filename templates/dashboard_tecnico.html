@@ -275,6 +275,8 @@
             transition: margin-left 0.3s ease-in-out;
             color: white; /* Cor do texto no conteúdo principal */
             min-height: calc(100vh - var(--header-height)); /* Garante que o conteúdo principal ocupe o restante da altura */
+            overflow-y: auto; /* PERMITE A ROLAGEM VERTICAL NESTE ELEMENTO */
+            height: calc(100vh - var(--header-height)); /* Define uma altura explícita para que overflow funcione */
         }
 
         .sidebar.expanded ~ .main-content {
