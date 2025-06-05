@@ -76,7 +76,7 @@ def cadastro_tecnico():
         session['user_id'] = cursor.lastrowid # Pega o ID gerado para o novo técnico
         session['user_name'] = nome_tecnico
         
-        flash("Autenticação realizada com sucesso!", "message")
+        flash("Registo e Autenticação realizados com sucesso!", "message")
         return jsonify({"success": True, "redirect": url_for('dashboard_tecnico')})
 
     except mysql.connector.Error as err:
@@ -115,7 +115,7 @@ def dashboard_tecnico():
             # Seleciona as colunas conforme a imagem fornecida
             cursor.execute("SELECT id, nome_usuario, email, telefone, codigo_guarda_chuva, data_retirada, hora_retirada, timestamp_retirada, ativo FROM umbrella_retirada")
             users = cursor.fetchall()
-            flash("Dados atualizados com sucesso!", "message")
+            flash("Dados de utilizadores carregados com sucesso!", "message")
         except mysql.connector.Error as err:
             flash(f"Erro ao carregar utilizadores da base de dados: {err}", "error")
             print(f"Erro SQL ao carregar utilizadores: {err}")
@@ -137,7 +137,7 @@ def api_search_users():
     # Pega os dados da requisição POST
     data = request.get_json()
     nome = data.get('nomeUsuario', '').strip()
-    cpf = data.get('cpfUsuario', '').strip() # CPF é mantido no frontend, mas não é usado na query SQL para umbrella_retirada
+    # CPF é mantido no frontend apenas para preenchimento, mas não é usado na query SQL para umbrella_retirada
     email = data.get('emailUsuario', '').strip()
 
     conn = get_db_connection()
