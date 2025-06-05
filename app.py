@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, s
 import os
 import mysql.connector # Importa a biblioteca do MySQL
 from werkzeug.security import generate_password_hash, check_password_hash # Para hashing de palavras-passe
+from datetime import date, datetime, timedelta # Importa para lidar com tipos de dados de data/hora
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'sua_super_chave_secreta_e_complexa_aqui_12345')
@@ -114,7 +115,24 @@ def dashboard_tecnico():
         try:
             # Seleciona as colunas conforme a imagem fornecida
             cursor.execute("SELECT id, nome_usuario, email, telefone, codigo_guarda_chuva, data_retirada, hora_retirada, timestamp_retirada, ativo FROM umbrella_retirada")
-            users = cursor.fetchall()
+            raw_users = cursor.fetchall()
+            
+            # Formata os objetos de data/hora para strings JSON serializáveis
+            for user in raw_users:
+                # Converte objetos date para string (formato 'YYYY-MM-DD')
+                if isinstance(user.get('data_retirada'), date):
+                    user['data_retirada'] = user['data_retirada'].isoformat()
+                # Converte objetos time para string (formato 'HH:MM:SS')
+                if isinstance(user.get('hora_retirada'), timedelta): # MySQL Connector pode retornar timedelta para TIME
+                    total_seconds = int(user['hora_retirada'].total_seconds())
+                    hours, remainder = divmod(total_seconds, 3600)
+                    minutes, seconds = divmod(remainder, 60)
+                    user['hora_retirada'] = f"{hours:02}:{minutes:02}:{seconds:02}"
+                # Converte objetos datetime para string (formato ISO 8601)
+                if isinstance(user.get('timestamp_retirada'), datetime):
+                    user['timestamp_retirada'] = user['timestamp_retirada'].isoformat()
+                users.append(user) # Adiciona o usuário formatado à lista final
+
             flash("Dados de utilizadores carregados com sucesso!", "message")
         except mysql.connector.Error as err:
             flash(f"Erro ao carregar utilizadores da base de dados: {err}", "error")
@@ -144,19 +162,17 @@ def api_search_users():
         return jsonify({"success": False, "message": "Não foi possível conectar à base de dados."}), 500
 
     cursor = conn.cursor(dictionary=True) # Retorna resultados como dicionários
-    users = []
+    formatted_users = [] # Nova lista para usuários formatados
     try:
-        # A query agora considera as colunas reais da tabela e usa LOWER() para busca case-insensitive
         query = "SELECT id, nome_usuario, email, telefone, codigo_guarda_chuva, data_retirada, hora_retirada, timestamp_retirada, ativo FROM umbrella_retirada WHERE 1=1"
         params = []
 
         if nome:
-            query += " AND LOWER(nome_usuario) LIKE LOWER(%s)" # Usando LOWER() para garantir case-insensitivity
+            query += " AND LOWER(nome_usuario) LIKE LOWER(%s)"
             params.append(f"%{nome}%")
         if email:
-            query += " AND LOWER(email) LIKE LOWER(%s)" # Usando LOWER() para garantir case-insensitivity
+            query += " AND LOWER(email) LIKE LOWER(%s)"
             params.append(f"%{email}%")
-        # O campo 'cpf' não existe na tabela 'umbrella_retirada', portanto, não será usado na filtragem SQL.
 
         # --- LINHAS DE DEBUG: Imprime a query e os parâmetros no terminal ---
         print(f"DEBUG: Executando query: {query}")
@@ -164,9 +180,27 @@ def api_search_users():
         # --- FIM DAS LINHAS DE DEBUG ---
 
         cursor.execute(query, params)
-        users = cursor.fetchall()
+        raw_users = cursor.fetchall() # Pega os resultados crus do banco
+
+        # Formata os objetos de data/hora para strings JSON serializáveis
+        for user in raw_users:
+            # Garante que criamos uma cópia mutável do dicionário
+            user_copy = dict(user) 
+            # Converte objetos date para string (formato 'YYYY-MM-DD')
+            if isinstance(user_copy.get('data_retirada'), date):
+                user_copy['data_retirada'] = user_copy['data_retirada'].isoformat()
+            # Converte objetos time para string (formato 'HH:MM:SS')
+            if isinstance(user_copy.get('hora_retirada'), timedelta): # MySQL Connector pode retornar timedelta para TIME
+                total_seconds = int(user_copy['hora_retirada'].total_seconds())
+                hours, remainder = divmod(total_seconds, 3600)
+                minutes, seconds = divmod(remainder, 60)
+                user_copy['hora_retirada'] = f"{hours:02}:{minutes:02}:{seconds:02}"
+            # Converte objetos datetime para string (formato ISO 8601)
+            if isinstance(user_copy.get('timestamp_retirada'), datetime):
+                user_copy['timestamp_retirada'] = user_copy['timestamp_retirada'].isoformat()
+            formatted_users.append(user_copy) # Adiciona o usuário formatado à lista final
         
-        return jsonify({"success": True, "users": users})
+        return jsonify({"success": True, "users": formatted_users}) # Retorna a lista formatada
 
     except mysql.connector.Error as err:
         print(f"Erro SQL na pesquisa de utilizadores: {err}")
