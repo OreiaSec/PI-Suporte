@@ -314,7 +314,14 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            opacity: 1; /* Começa visível */
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out; /* Transição para fade out */
         }
+        .flash-message.hide, .flash-error.hide {
+            opacity: 0;
+            transform: translateY(-20px); /* Move para cima enquanto some */
+        }
+
         .flash-message {
             background-color: rgba(40, 167, 69, 0.1);
             border: 1px solid #28a745;
@@ -591,7 +598,7 @@
     <main class="main-content" id="mainContent"> 
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div class="flash-messages-container">
+                <div class="flash-messages-container" id="flashMessagesContainer"> {# Adicionado ID para JS #}
                     {% for category, message in messages %}
                         <div class="flash-{{ category }}">
                             {% if category == 'message' %}
@@ -678,13 +685,12 @@
         const sidebar = document.getElementById('sidebar');
         const hamburgerMenu = document.getElementById('hamburgerMenu');
         const userDropdown = document.getElementById('userDropdown');
-        const searchResultsTableBody = document.getElementById('searchResultsTableBody'); // Corrigido para o ID específico do tbody
-        
+        const searchResultsTableBody = document.getElementById('searchResultsTableBody'); 
+        const flashMessagesContainer = document.getElementById('flashMessagesContainer'); // Novo: container das mensagens
+
         function toggleSidebar() {
             sidebar.classList.toggle('expanded');
-            // Apenas adiciona a classe sidebar-open no body para mobile quando expandido
             document.body.classList.toggle('sidebar-open', sidebar.classList.contains('expanded') && window.innerWidth <= 768);
-            // Previne scroll do corpo em mobile quando sidebar está aberta
             document.body.style.overflow = sidebar.classList.contains('expanded') && window.innerWidth <= 768 ? 'hidden' : '';
         }
 
@@ -700,7 +706,6 @@
             if (!userDropdown.contains(event.target)) {
                 userDropdown.classList.remove('show');
             }
-            // Lógica para fechar a sidebar ao clicar fora (já existente)
             if (window.innerWidth <= 768 && sidebar.classList.contains('expanded')) {
                 const isClickInsideSidebar = sidebar.contains(event.target);
                 const isClickOnHamburger = hamburgerMenu.contains(event.target);
@@ -714,15 +719,14 @@
         // Inicializa o estado da sidebar no carregamento e redimensionamento
         window.addEventListener('resize', function() {
             if (window.innerWidth > 768) {
-                sidebar.classList.add('expanded'); // Sempre expandida no desktop
+                sidebar.classList.add('expanded');
                 document.body.classList.remove('sidebar-open');
                 document.body.style.overflow = '';
             } else {
-                sidebar.classList.remove('expanded'); // Sempre recolhida no mobile
+                sidebar.classList.remove('expanded');
                 document.body.classList.remove('sidebar-open');
                 document.body.style.overflow = '';
             }
-            // Fecha o dropdown no redimensionamento se estiver aberto
             userDropdown.classList.remove('show');
         });
 
@@ -744,19 +748,28 @@
                 sidebar.classList.remove('expanded');
             }
 
-            // A tabela já será populada inicialmente via Jinja2 no HTML.
-            // A função abaixo é apenas para a busca via AJAX.
+            // NOVO: Faz as mensagens de flash sumirem automaticamente
+            if (flashMessagesContainer) {
+                const messages = flashMessagesContainer.querySelectorAll('.flash-message, .flash-error');
+                messages.forEach(messageDiv => {
+                    setTimeout(() => {
+                        messageDiv.classList.add('hide'); // Adiciona classe para iniciar a transição CSS
+                        messageDiv.addEventListener('transitionend', () => {
+                            messageDiv.remove(); // Remove o elemento do DOM após a transição
+                        });
+                    }, 5000); // 5 segundos antes de começar a sumir
+                });
+            }
         });
 
         // Função para renderizar utilizadores na tabela
         function renderUsers(users) {
-            searchResultsTableBody.innerHTML = ''; // Limpa os resultados anteriores
+            searchResultsTableBody.innerHTML = ''; 
             if (users.length > 0) {
                 users.forEach(user => {
                     const row = document.createElement('tr');
-                    // Formatando as datas e horas para exibição se existirem
                     const dataRetirada = user.data_retirada ? new Date(user.data_retirada).toLocaleDateString('pt-BR') : '';
-                    const horaRetirada = user.hora_retirada || ''; // Hora geralmente é uma string ou objeto time que não precisa de formatação complexa aqui
+                    const horaRetirada = user.hora_retirada || ''; 
                     const timestampRetirada = user.timestamp_retirada ? new Date(user.timestamp_retirada).toLocaleString('pt-BR') : '';
                     const ativoStatus = (user.ativo !== undefined && user.ativo !== null) ? (user.ativo ? "Sim" : "Não") : '';
 
@@ -778,7 +791,7 @@
                 });
             } else {
                 const noResultsRow = document.createElement('tr');
-                noResultsRow.innerHTML = `<td colspan="9">Nenhum utilizador encontrado.</td>`; /* colspan ajustado para 9 colunas sem CPF */
+                noResultsRow.innerHTML = `<td colspan="9">Nenhum utilizador encontrado.</td>`; 
                 searchResultsTableBody.appendChild(noResultsRow);
             }
         }
@@ -787,10 +800,9 @@
         const userSearchForm = document.getElementById('userSearchForm');
 
         userSearchForm.addEventListener('submit', async function(event) {
-            event.preventDefault(); // Impede o envio padrão do formulário
+            event.preventDefault(); 
 
             const nome = document.getElementById('nomeUsuario').value;
-            // O campo CPF foi removido do HTML, então não precisamos mais buscar seu valor aqui.
             const email = document.getElementById('emailUsuario').value;
 
             const searchData = {
@@ -803,7 +815,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest' // Para identificar requisições AJAX no backend (opcional, mas boa prática)
+                        'X-Requested-With': 'XMLHttpRequest' 
                     },
                     body: JSON.stringify(searchData)
                 });
@@ -811,27 +823,22 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    renderUsers(result.users); // Renderiza os utilizadores recebidos do backend
+                    renderUsers(result.users); 
                 } else {
                     console.error("Erro na busca de utilizadores:", result.message);
-                    renderUsers([]); // Limpa a tabela ou exibe mensagem de erro
-                    // Usando console.log ao invés de alert() conforme instruído
-                    console.log("Erro ao pesquisar utilizadores: " + result.message);
+                    renderUsers([]); 
+                    console.log("Erro ao pesquisar utilizadores: " + result.message); 
                 }
             } catch (error) {
                 console.error('Erro na requisição ou no servidor:', error);
-                renderUsers([]); // Limpa a tabela em caso de erro de rede/servidor
-                // Usando console.log ao invés de alert() conforme instruído
+                renderUsers([]); 
                 console.log('Erro de conexão com o servidor. Tente novamente.');
             }
         });
 
         // Exemplo de função para "Ver Detalhes"
         function viewUserDetails(email) {
-            // Substituí o alert por um console.log, conforme as instruções do Gemini
             console.log('Ação: Ver detalhes do utilizador com e-mail: ' + email);
-            // Aqui você idealmente faria um redirecionamento ou abriria um modal
-            // Ex: window.location.href = '/user_details/' + email;
         }
     </script>
 </body>
