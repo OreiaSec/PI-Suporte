@@ -76,7 +76,7 @@ def cadastro_tecnico():
         session['user_id'] = cursor.lastrowid # Pega o ID gerado para o novo técnico
         session['user_name'] = nome_tecnico
         
-        flash("Cadastro e Login realizados com sucesso!", "message")
+        flash("Login realizado com sucesso!", "message")
         return jsonify({"success": True, "redirect": url_for('dashboard_tecnico')})
 
     except mysql.connector.Error as err:
