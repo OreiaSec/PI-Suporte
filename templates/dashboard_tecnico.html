@@ -375,7 +375,7 @@
             }
         }
 
-        /* Estilos para a Seção de Pesquisa de Usuários */
+        /* Estilos para a Seção de Pesquisa de Utilizadores */
         .search-section {
             background-color: rgba(255, 255, 255, 0.1);
             padding: 30px;
@@ -604,23 +604,23 @@
             {% endif %}
         {% endwith %}
 
-        {# Seção de Pesquisa de Usuários #}
+        {# Seção de Pesquisa de Utilizadores #}
         <div class="search-section">
-            <h2>Pesquisar Usuários</h2>
-            <p>Utilize os campos abaixo para buscar informações de usuários no sistema.</p>
+            <h2>Pesquisar Utilizadores</h2>
+            <p>Utilize os campos abaixo para buscar informações de utilizadores no sistema.</p>
 
             <form id="userSearchForm" class="search-form">
                 <div class="input-group-search">
                     <i class="fas fa-user"></i>
-                    <input type="text" id="nomeUsuario" name="nomeUsuario" placeholder="Nome do Usuário">
+                    <input type="text" id="nomeUsuario" name="nomeUsuario" placeholder="Nome do Utilizador">
                 </div>
                 <div class="input-group-search">
                     <i class="fas fa-id-card"></i>
-                    <input type="text" id="cpfUsuario" name="cpfUsuario" placeholder="CPF do Usuário">
+                    <input type="text" id="cpfUsuario" name="cpfUsuario" placeholder="CPF do Utilizador">
                 </div>
                 <div class="input-group-search">
                     <i class="fas fa-envelope"></i>
-                    <input type="email" id="emailUsuario" name="emailUsuario" placeholder="E-mail do Usuário">
+                    <input type="email" id="emailUsuario" name="emailUsuario" placeholder="E-mail do Utilizador">
                 </div>
                 <button type="submit" class="search-button">
                     <i class="fas fa-search"></i> Pesquisar
@@ -633,15 +633,40 @@
                     <table class="user-table">
                         <thead>
                             <tr>
+                                <th>ID</th>
                                 <th>Nome</th>
-                                <th>CPF</th>
                                 <th>E-mail</th>
-                                <th>Status</th>
+                                <th>Telefone</th>
+                                <th>Código Guarda-Chuva</th>
+                                <th>Data Retirada</th>
+                                <th>Hora Retirada</th>
+                                <th>Timestamp Retirada</th>
+                                <th>Ativo</th>
                                 <th>Ações</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr><td colspan="5">Nenhum usuário encontrado.</td></tr>
+                        <tbody id="searchResultsTableBody">
+                            {# Os dados dos utilizadores serão inseridos aqui pelo JavaScript ou Jinja2 #}
+                            {% if initial_users %}
+                                {% for user in initial_users %}
+                                <tr>
+                                    <td>{{ user.id or '' }}</td>
+                                    <td>{{ user.nome_usuario or '' }}</td>
+                                    <td>{{ user.email or '' }}</td>
+                                    <td>{{ user.telefone or '' }}</td>
+                                    <td>{{ user.codigo_guarda_chuva or '' }}</td>
+                                    <td>{{ user.data_retirada | default('') }}</td> {# Data pode ser um objeto datetime, use default se for None #}
+                                    <td>{{ user.hora_retirada | default('') }}</td> {# Hora pode ser um objeto time, use default se for None #}
+                                    <td>{{ user.timestamp_retirada | default('') }}</td> {# Timestamp pode ser um objeto datetime, use default se for None #}
+                                    <td>{{ "Sim" if user.ativo else "Não" }}</td> {# Exemplo: "Sim" ou "Não" para booleano #}
+                                    <td class="actions">
+                                        <button onclick="viewUserDetails('{{ user.email or '' }}')">Ver Detalhes</button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr><td colspan="10">Nenhum utilizador encontrado.</td></tr> {# colspan ajustado #}
+                            {% endif %}
                         </tbody>
                     </table>
                 </div>
@@ -654,6 +679,7 @@
         const sidebar = document.getElementById('sidebar');
         const hamburgerMenu = document.getElementById('hamburgerMenu');
         const userDropdown = document.getElementById('userDropdown');
+        const searchResultsTableBody = document.getElementById('searchResultsTableBody'); // Corrigido para o ID específico do tbody
         
         function toggleSidebar() {
             sidebar.classList.toggle('expanded');
@@ -670,12 +696,12 @@
         hamburgerMenu.addEventListener('click', toggleSidebar);
         userDropdown.addEventListener('click', toggleUserDropdown);
 
-        // Close dropdown if clicked outside
+        // Fecha o dropdown se clicado fora
         document.addEventListener('click', function(event) {
             if (!userDropdown.contains(event.target)) {
                 userDropdown.classList.remove('show');
             }
-            // Logic for sidebar closing on outside click (already there)
+            // Lógica para fechar a sidebar ao clicar fora (já existente)
             if (window.innerWidth <= 768 && sidebar.classList.contains('expanded')) {
                 const isClickInsideSidebar = sidebar.contains(event.target);
                 const isClickOnHamburger = hamburgerMenu.contains(event.target);
@@ -686,24 +712,24 @@
             }
         });
 
-        // Initialize sidebar state on load and resize
+        // Inicializa o estado da sidebar no carregamento e redimensionamento
         window.addEventListener('resize', function() {
             if (window.innerWidth > 768) {
-                sidebar.classList.add('expanded'); // Always expanded on desktop
+                sidebar.classList.add('expanded'); // Sempre expandida no desktop
                 document.body.classList.remove('sidebar-open');
                 document.body.style.overflow = '';
             } else {
-                sidebar.classList.remove('expanded'); // Always collapsed on mobile
+                sidebar.classList.remove('expanded'); // Sempre recolhida no mobile
                 document.body.classList.remove('sidebar-open');
                 document.body.style.overflow = '';
             }
-            // Close dropdown on resize if it was open
+            // Fecha o dropdown no redimensionamento se estiver aberto
             userDropdown.classList.remove('show');
         });
 
         // Inicializa o Loading Screen e outras funções JavaScript
         document.addEventListener('DOMContentLoaded', function() {
-            // Remove o screen de carregamento.
+            // Remove o ecrã de carregamento.
             setTimeout(() => {
                 document.querySelector(".loading-screen").style.opacity = 0;
                 setTimeout(() => {
@@ -718,66 +744,94 @@
             } else {
                 sidebar.classList.remove('expanded');
             }
+
+            // A tabela já será populada inicialmente via Jinja2 no HTML.
+            // A função abaixo é apenas para a busca via AJAX.
         });
 
-        // JavaScript para lidar com a pesquisa de usuários
-        const userSearchForm = document.getElementById('userSearchForm');
-        const searchResultsTableBody = document.querySelector('.user-table tbody');
-
-        userSearchForm.addEventListener('submit', function(event) {
-            event.preventDefault(); // Impede o envio padrão do formulário
-
-            const nome = document.getElementById('nomeUsuario').value;
-            const cpf = document.getElementById('cpfUsuario').value;
-            const email = document.getElementById('emailUsuario').value;
-
-            // TODO: Enviar esses dados para o Flask (backend)
-            // Por enquanto, vamos simular alguns resultados
-
-            console.log('Pesquisando por:', { nome, cpf, email });
-
-            // Simulação de dados de usuários
-            const simulatedUsers = [
-                { nome: 'João Silva', cpf: '123.456.789-00', email: 'joao.s@example.com', status: 'Ativo' },
-                { nome: 'Maria Santos', cpf: '987.654.321-00', email: 'maria.s@example.com', status: 'Inativo' },
-                { nome: 'Pedro Costa', cpf: '111.222.333-44', email: 'pedro.c@example.com', status: 'Ativo' }
-            ];
-
-            // Filtra os usuários simulados com base nos inputs (um filtro bem básico)
-            const filteredUsers = simulatedUsers.filter(user => {
-                const matchNome = nome ? user.nome.toLowerCase().includes(nome.toLowerCase()) : true;
-                const matchCpf = cpf ? user.cpf.includes(cpf) : true;
-                const matchEmail = email ? user.email.toLowerCase().includes(email.toLowerCase()) : true;
-                return matchNome && matchCpf && matchEmail;
-            });
-
-            // Limpa os resultados anteriores
-            searchResultsTableBody.innerHTML = '';
-
-            if (filteredUsers.length > 0) {
-                filteredUsers.forEach(user => {
+        // Função para renderizar utilizadores na tabela
+        function renderUsers(users) {
+            searchResultsTableBody.innerHTML = ''; // Limpa os resultados anteriores
+            if (users.length > 0) {
+                users.forEach(user => {
                     const row = document.createElement('tr');
+                    // Formatando as datas e horas para exibição se existirem
+                    const dataRetirada = user.data_retirada ? new Date(user.data_retirada).toLocaleDateString('pt-BR') : '';
+                    const horaRetirada = user.hora_retirada || ''; // Hora geralmente é uma string ou objeto time que não precisa de formatação complexa aqui
+                    const timestampRetirada = user.timestamp_retirada ? new Date(user.timestamp_retirada).toLocaleString('pt-BR') : '';
+                    const ativoStatus = (user.ativo !== undefined && user.ativo !== null) ? (user.ativo ? "Sim" : "Não") : '';
+
                     row.innerHTML = `
-                        <td>${user.nome}</td>
-                        <td>${user.cpf}</td>
-                        <td>${user.email}</td>
-                        <td>${user.status}</td>
+                        <td>${user.id || ''}</td>
+                        <td>${user.nome_usuario || ''}</td>
+                        <td>${user.email || ''}</td>
+                        <td>${user.telefone || ''}</td>
+                        <td>${user.codigo_guarda_chuva || ''}</td>
+                        <td>${dataRetirada}</td>
+                        <td>${horaRetirada}</td>
+                        <td>${timestampRetirada}</td>
+                        <td>${ativoStatus}</td>
                         <td class="actions">
-                            <button onclick="viewUserDetails('${user.email}')">Ver Detalhes</button>
+                            <button onclick="viewUserDetails('${user.email || ''}')">Ver Detalhes</button>
                         </td>
                     `;
                     searchResultsTableBody.appendChild(row);
                 });
             } else {
                 const noResultsRow = document.createElement('tr');
-                noResultsRow.innerHTML = `<td colspan="5">Nenhum usuário encontrado.</td>`;
+                noResultsRow.innerHTML = `<td colspan="10">Nenhum utilizador encontrado.</td>`; /* colspan ajustado */
                 searchResultsTableBody.appendChild(noResultsRow);
+            }
+        }
+
+        // JavaScript para lidar com a pesquisa de utilizadores (agora via AJAX)
+        const userSearchForm = document.getElementById('userSearchForm');
+
+        userSearchForm.addEventListener('submit', async function(event) {
+            event.preventDefault(); // Impede o envio padrão do formulário
+
+            const nome = document.getElementById('nomeUsuario').value;
+            const cpf = document.getElementById('cpfUsuario').value; // CPF é mantido no frontend, mas não é usado na busca
+            const email = document.getElementById('emailUsuario').value;
+
+            const searchData = {
+                nomeUsuario: nome,
+                // Removido cpfUsuario do objeto de envio, pois não é usado na query SQL
+                emailUsuario: email
+            };
+
+            try {
+                const response = await fetch('/api/search_users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest' // Para identificar requisições AJAX no backend (opcional, mas boa prática)
+                    },
+                    body: JSON.stringify(searchData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    renderUsers(result.users); // Renderiza os utilizadores recebidos do backend
+                } else {
+                    console.error("Erro na busca de utilizadores:", result.message);
+                    renderUsers([]); // Limpa a tabela ou exibe mensagem de erro
+                    // Usando console.log ao invés de alert() conforme instruído
+                    console.log("Erro ao pesquisar utilizadores: " + result.message); 
+                }
+            } catch (error) {
+                console.error('Erro na requisição ou no servidor:', error);
+                renderUsers([]); // Limpa a tabela em caso de erro de rede/servidor
+                // Usando console.log ao invés de alert() conforme instruído
+                console.log('Erro de conexão com o servidor. Tente novamente.');
             }
         });
 
         // Exemplo de função para "Ver Detalhes"
         function viewUserDetails(email) {
-            alert('Ação: Ver detalhes do usuário com e-mail: ' + email);
+            // Substituí o alert por um console.log, conforme as instruções do Gemini
+            console.log('Ação: Ver detalhes do utilizador com e-mail: ' + email);
             // Aqui você idealmente faria um redirecionamento ou abriria um modal
             // Ex: window.location.href = '/user_details/' + email;
         }
