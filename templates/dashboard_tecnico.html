@@ -616,10 +616,7 @@
                     <i class="fas fa-user"></i>
                     <input type="text" id="nomeUsuario" name="nomeUsuario" placeholder="Nome do Utilizador">
                 </div>
-                <div class="input-group-search">
-                    <i class="fas fa-id-card"></i>
-                    <input type="text" id="cpfUsuario" name="cpfUsuario" placeholder="CPF do Utilizador">
-                </div>
+                {# REMOVIDO O CAMPO DE CPF #}
                 <div class="input-group-search">
                     <i class="fas fa-envelope"></i>
                     <input type="email" id="emailUsuario" name="emailUsuario" placeholder="E-mail do Utilizador">
@@ -781,7 +778,7 @@
                 });
             } else {
                 const noResultsRow = document.createElement('tr');
-                noResultsRow.innerHTML = `<td colspan="10">Nenhum utilizador encontrado.</td>`; /* colspan ajustado */
+                noResultsRow.innerHTML = `<td colspan="9">Nenhum utilizador encontrado.</td>`; /* colspan ajustado para 9 colunas sem CPF */
                 searchResultsTableBody.appendChild(noResultsRow);
             }
         }
@@ -793,12 +790,11 @@
             event.preventDefault(); // Impede o envio padrão do formulário
 
             const nome = document.getElementById('nomeUsuario').value;
-            const cpf = document.getElementById('cpfUsuario').value; // CPF é mantido no frontend, mas não é usado na busca
+            // O campo CPF foi removido do HTML, então não precisamos mais buscar seu valor aqui.
             const email = document.getElementById('emailUsuario').value;
 
             const searchData = {
                 nomeUsuario: nome,
-                // Removido cpfUsuario do objeto de envio, pois não é usado na query SQL
                 emailUsuario: email
             };
 
