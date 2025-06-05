@@ -31,25 +31,25 @@ def get_db_connection():
         flash("Erro interno no servidor ao conectar ao banco de dados.", "error")
         return None
 
-@app.route('/') [cite: 1]
-def index(): [cite: 1]
+@app.route('/')
+def index():
     # Se o usuário já estiver logado (ou seja, 'user_name' na sessão),
     # redireciona diretamente para o dashboard, evitando que ele veja a tela de login novamente.
-    if 'user_name' in session: [cite: 2]
-        return redirect(url_for('dashboard_tecnico')) [cite: 2]
+    if 'user_name' in session:
+        return redirect(url_for('dashboard_tecnico'))
     
     # Renderiza a tela de login/cadastro se não estiver logado
-    return render_template('index.html') [cite: 205]
+    return render_template('index.html')
 
-@app.route('/cadastro_tecnico', methods=['POST']) [cite: 2]
-def cadastro_tecnico(): [cite: 2]
+@app.route('/cadastro_tecnico', methods=['POST'])
+def cadastro_tecnico():
     nome_tecnico = request.form.get('nomeTecnico')
     email_corporativo = request.form.get('emailCorporativo')
     senha = request.form.get('senha')
 
-    if not nome_tecnico or not email_corporativo or not senha: [cite: 2]
-        flash("Por favor, preencha todos os campos!", "error") [cite: 2]
-        return jsonify({"success": False, "message": "Por favor, preencha todos os campos!"}), 400 [cite: 2]
+    if not nome_tecnico or not email_corporativo or not senha:
+        flash("Por favor, preencha todos os campos!", "error")
+        return jsonify({"success": False, "message": "Por favor, preencha todos os campos!"}), 400
 
     conn = get_db_connection()
     if conn is None:
@@ -89,23 +89,23 @@ def cadastro_tecnico(): [cite: 2]
         if conn:
             conn.close()
 
-@app.route('/logout') [cite: 4]
-def logout(): [cite: 4]
-    session.pop('user_id', None) [cite: 5]
-    session.pop('user_name', None) [cite: 5]
-    flash('Você foi desconectado.', 'message') [cite: 5]
-    return redirect(url_for('index')) [cite: 5]
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)
+    session.pop('user_name', None)
+    flash('Você foi desconectado.', 'message')
+    return redirect(url_for('index'))
 
 # --- NOVA ROTA ADICIONADA: Dashboard do Técnico ---
-@app.route('/dashboard_tecnico') [cite: 4]
-def dashboard_tecnico(): [cite: 4]
+@app.route('/dashboard_tecnico')
+def dashboard_tecnico():
     # Verifica se o usuário está logado antes de exibir o dashboard
-    if 'user_name' not in session: [cite: 4]
-        flash("Você precisa estar logado para acessar esta página.", "error") [cite: 5]
-        return redirect(url_for('index')) [cite: 5]
+    if 'user_name' not in session:
+        flash("Você precisa estar logado para acessar esta página.", "error")
+        return redirect(url_for('index'))
     
-    user_name = session.get('user_name', 'Usuário') [cite: 5]
-    return render_template('dashboard_tecnico.html', user_name=user_name) [cite: 5]
+    user_name = session.get('user_name', 'Usuário')
+    return render_template('dashboard_tecnico.html', user_name=user_name)
 
-if __name__ == '__main__': [cite: 5]
-    app.run(debug=True) [cite: 5]
+if __name__ == '__main__':
+    app.run(debug=True)
