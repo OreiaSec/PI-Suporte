@@ -137,7 +137,6 @@ def api_search_users():
     # Pega os dados da requisição POST
     data = request.get_json()
     nome = data.get('nomeUsuario', '').strip()
-    # CPF é mantido no frontend apenas para preenchimento, mas não é usado na query SQL para umbrella_retirada
     email = data.get('emailUsuario', '').strip()
 
     conn = get_db_connection()
@@ -147,15 +146,15 @@ def api_search_users():
     cursor = conn.cursor(dictionary=True) # Retorna resultados como dicionários
     users = []
     try:
-        # A query agora considera as colunas reais da tabela e remove o CPF da busca SQL
+        # A query agora considera as colunas reais da tabela e usa LOWER() para busca case-insensitive
         query = "SELECT id, nome_usuario, email, telefone, codigo_guarda_chuva, data_retirada, hora_retirada, timestamp_retirada, ativo FROM umbrella_retirada WHERE 1=1"
         params = []
 
         if nome:
-            query += " AND nome_usuario LIKE %s"
+            query += " AND LOWER(nome_usuario) LIKE LOWER(%s)" # Usando LOWER() para garantir case-insensitivity
             params.append(f"%{nome}%")
-        if email: # Usar a coluna 'email' da tabela
-            query += " AND email LIKE %s"
+        if email:
+            query += " AND LOWER(email) LIKE LOWER(%s)" # Usando LOWER() para garantir case-insensitivity
             params.append(f"%{email}%")
         # O campo 'cpf' não existe na tabela 'umbrella_retirada', portanto, não será usado na filtragem SQL.
 
