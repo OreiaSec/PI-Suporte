@@ -115,7 +115,7 @@ def dashboard_tecnico():
             # Seleciona as colunas conforme a imagem fornecida
             cursor.execute("SELECT id, nome_usuario, email, telefone, codigo_guarda_chuva, data_retirada, hora_retirada, timestamp_retirada, ativo FROM umbrella_retirada")
             users = cursor.fetchall()
-            flash("Dados de utilizadores carregados com sucesso!", "message")
+            flash("Dados atualizados com sucesso!", "message")
         except mysql.connector.Error as err:
             flash(f"Erro ao carregar utilizadores da base de dados: {err}", "error")
             print(f"Erro SQL ao carregar utilizadores: {err}")
