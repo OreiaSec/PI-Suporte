@@ -659,7 +659,7 @@
                                     <td>{{ user.timestamp_retirada | default('') }}</td> {# Timestamp pode ser um objeto datetime, use default se for None #}
                                     <td>{{ "Sim" if user.ativo else "Não" }}</td> {# Exemplo: "Sim" ou "Não" para booleano #}
                                     <td class="actions">
-                                        <button onclick="viewUserDetails('{{ user.email or '' }}')">Ver Detalhes</button>
+                                        <button onclick="viewUserDetails('${user.email || ''}')">Ver Detalhes</button>
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -816,7 +816,7 @@
                     console.error("Erro na busca de utilizadores:", result.message);
                     renderUsers([]); // Limpa a tabela ou exibe mensagem de erro
                     // Usando console.log ao invés de alert() conforme instruído
-                    console.log("Erro ao pesquisar utilizadores: " + result.message); 
+                    console.log("Erro ao pesquisar utilizadores: " + result.message);
                 }
             } catch (error) {
                 console.error('Erro na requisição ou no servidor:', error);
